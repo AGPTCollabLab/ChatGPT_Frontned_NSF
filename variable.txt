@@ -1,7 +1,0 @@
-AUTH0_SECRET=your_generated_secret
-AUTH0_BASE_URL=https://fictional-halibut-q74ggr9pgp6g24jg4-3000.app.github.dev
-AUTH0_ISSUER_BASE_URL=https://dev-ifgq4qel1814yxsn.us.auth0.com
-AUTH0_CLIENT_ID=EgBayAUNiU3H9S25yThR7UCDuYY4m40x
-AUTH0_CLIENT_SECRET=oloCfg-RuN6FUDgbS-ebGkAcYrS9Lbrx23NSQ4cjbIlz_l6mmxg4H5skq83ZefqT
-MONGODB_URI=mongodb+srv://agptcollablab:bIs0Diux4GqHkAdV@agptfreetesting.oi9rs.mongodb.net/?retryWrites=true&w=majority&appName=AGPTFreeTesting
-OPEN_API_KEY=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
