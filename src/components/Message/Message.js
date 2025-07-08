@@ -1,14 +1,16 @@
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 
-export const Message = ({ role, content, user }) => {
+export const Message = ({ role, content, user, streaming = false }) => {
   return (
     <div
       className={`grid grid-cols-[30px_1fr] gap-5 p-5${
         role === 'assistant' ? ' bg-gray-600' : ''
       }`}
       role="article"
-      aria-label={role === 'assistant' ? 'Assistant message' : 'User message'}
+      aria-label={role === 'assistant' ? 'ChatGPT response' : 'Your message'}
+      aria-live={streaming ? 'off' : role === 'assistant' ? 'polite' : 'off'}
+      aria-hidden={streaming}
     >
       <div>
         {role === 'user' && !!user && (

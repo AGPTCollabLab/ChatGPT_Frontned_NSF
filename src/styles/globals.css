@@ -10,4 +10,14 @@
   .side-menu-item {
     @apply m-2 p-2 flex items-center gap-4 rounded-md hover:bg-gray-800;
   }
+
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .focus\:not-sr-only:focus {
+    @apply static w-auto h-auto p-2 m-0 overflow-visible whitespace-normal;
+    clip: auto;
+  }
 }

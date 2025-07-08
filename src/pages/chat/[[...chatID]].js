@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { ChatSidebar } from '@/components/ChatSidebar';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { streamReader } from 'openai-edge-stream';
 import { v4 as uuid } from 'uuid';
 import { Message } from '@/components/Message';
@@ -16,6 +16,7 @@ import EndChatDialog from '@/components/EndChatDialog';
 
 export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const [showLoginMessage, setshowLoginMessage] = useState(true);
+  const [showInitialIntentDialog, setShowInitialIntentDialog] = useState(false);
   const [newChatId, setNewChatId] = useState(null);
   const [incomingMessage, setIncomingMessage] = useState('');
   const [messageText, setMessageText] = useState('');
@@ -25,23 +26,52 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
   const [showEndChatDialog, setShowEndChatDialog] = useState(false);
   const [isChatEnded, setIsChatEnded] = useState(isEnded);
+  const [announcement, setAnnouncement] = useState('');
+  const [intentCompleted, setIntentCompleted] = useState(false);
+  const [isAnnouncingResponse, setIsAnnouncingResponse] = useState(false);
   const { user } = useUser();
   const [fullMessage, setFullMessage] = useState('');
   const [chatFeedback, setChatFeedback] = useState(feedback || '');
-  const [isMac, setIsMac] = useState(false);
   const router = useRouter();
+  
+  // Refs for focus management
+  const messageInputRef = useRef(null);
+  const announcementRef = useRef(null);
+  const responseAnnouncementRef = useRef(null);
+
+  // Function to announce messages to screen readers
+  const announceToScreenReader = (message) => {
+    setAnnouncement(message);
+    setTimeout(() => setAnnouncement(''), 100);
+  };
+
+  // Function to focus message input
+  const focusMessageInput = (force = false) => {
+    // Don't focus if announcing a response *unless* forced (e.g., user pressed T)
+    if (!force && isAnnouncingResponse) {
+      return;
+    }
+    setTimeout(() => {
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
+    }, 100);
+  };
 
   const handleIntentSubmit = async intent => {
+    const currentChatId = chatId || newChatId;
     const response = await fetch('/api/chat/saveIntent', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ chatId, intent }),
+      body: JSON.stringify({ chatId: currentChatId, intent }),
     });
     const data = await response.json();
     if (data.message === 'Intent saved successfully') {
       setShowIntentDialog(false);
+      announceToScreenReader('Intent saved successfully. You can now start chatting.');
+      focusMessageInput();
     } else {
       alert('An error occurred while saving your intent. Please try again.');
     }
@@ -96,6 +126,30 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
   const handleAcknowledge = () => {
     setshowLoginMessage(false);
+    // For new users (no chatId), show intent dialog first
+    if (!chatId) {
+      setShowInitialIntentDialog(true);
+      announceToScreenReader('Welcome! Please enter your intentions for using ChatGPT.');
+    } else {
+      // For existing chats, go straight to chat
+      announceToScreenReader('Welcome back! You can continue your conversation or start a new chat.');
+      focusMessageInput();
+    }
+  };
+
+  const handleInitialIntentSubmit = async (intent) => {
+    // Save the intent to localStorage or state for when the first chat is created
+    localStorage.setItem('pendingIntent', intent);
+    setShowInitialIntentDialog(false);
+    setIntentCompleted(true);
+    // Focus the new chat button after intent is saved
+    setTimeout(() => {
+      const newChatBtn = document.getElementById('new-chat-button');
+      if (newChatBtn) {
+        newChatBtn.focus();
+        announceToScreenReader('Intent saved. Press Enter to start a new chat.');
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -112,6 +166,37 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           content: fullMessage,
         },
       ]);
+      
+      // Create a dedicated announcement that won't be interrupted
+      const announceFullResponse = () => {
+        setIsAnnouncingResponse(true);
+        const responseText = `ChatGPT response: ${fullMessage}`;
+        
+        // Update persistent ARIA live region
+        if (responseAnnouncementRef.current) {
+          responseAnnouncementRef.current.textContent = responseText;
+        }
+
+        // Calculate generous reading time:
+        // words ≈ characters / 5
+        const words = Math.ceil(fullMessage.length / 5);
+        const estimatedReadingTimeMs = Math.max(5000, words * 500 + 2000); // 500ms per word + 2s buffer
+        
+        console.log(`Response length: ${fullMessage.length}, estimated reading time: ${estimatedReadingTimeMs}ms`);
+        
+        // Clear and focus only after sufficient time
+        setTimeout(() => {
+          if (responseAnnouncementRef.current) {
+            responseAnnouncementRef.current.textContent = '';
+          }
+          setIsAnnouncingResponse(false);
+          // Announcement finished – user can press T to continue typing
+          announceToScreenReader('Response finished. Press the T key to continue typing.');
+        }, estimatedReadingTimeMs);
+      };
+      
+      // Slight delay to ensure the response is fully rendered
+      setTimeout(announceFullResponse, 500);
       setFullMessage('');
     }
   }, [generatingResponse, fullMessage]);
@@ -169,7 +254,19 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       console.log('Message: ', message);
       if (message.event === 'newChatId') {
         setNewChatId(message.content);
-        setShowIntentDialog(true);
+        // For new chats, check if we have a pending intent to save
+        const pendingIntent = localStorage.getItem('pendingIntent');
+        if (pendingIntent) {
+          // Save the intent immediately for the new chat
+          await fetch('/api/chat/saveIntent', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({ chatId: message.content, intent: pendingIntent }),
+          });
+          localStorage.removeItem('pendingIntent');
+        }
       } else {
         setIncomingMessage(s => `${s}${message.content}`);
         content += message.content;
@@ -180,22 +277,12 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     setGeneratingResponse(false);
   };
 
-  useEffect(() => {
-    setIsMac(
-      /Mac|iPod|iPhone|iPad/.test(window.navigator.platform) ||
-        /Mac/.test(window.navigator.userAgent),
-    );
-  }, []);
-
   const handleKeyDown = useCallback(
     e => {
-      const isMacPlatform =
-        typeof window !== 'undefined' &&
-        (/Mac|iPod|iPhone|iPad/.test(window.navigator.platform) ||
-          /Mac/.test(window.navigator.userAgent));
+      const isApple = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform) || /Mac/.test(window.navigator.userAgent);
 
       if (e.key === 'Enter') {
-        if (showIntentDialog || showAnnotationDialog || showEndChatDialog) {
+        if (showInitialIntentDialog || showIntentDialog || showAnnotationDialog || showEndChatDialog) {
           e.preventDefault();
           const focusedElement = document.activeElement;
           if (focusedElement && focusedElement.tagName === 'BUTTON') {
@@ -203,34 +290,40 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           }
         } else if (
           messageText.trim() !== '' &&
-          (isMacPlatform ? !e.metaKey : !e.ctrlKey)
+          (isApple ? !e.metaKey : !e.ctrlKey)
         ) {
           e.preventDefault();
           handleSubmit(e);
-        } else if (isMacPlatform ? e.metaKey : e.ctrlKey) {
+        } else if (isApple ? e.metaKey : e.ctrlKey) {
           setMessageText(prev => prev + '\n');
         }
       } else if (e.key === '0' || e.keyCode === 48) {
-        if (isMacPlatform && e.metaKey && e.altKey) {
-          e.preventDefault();
-          if (chatId) {
-            setShowAnnotationDialog(true);
-          }
-        } else if (!isMacPlatform && e.ctrlKey && e.altKey) {
+        if ( (isApple && e.metaKey && e.altKey) || (!isApple && e.ctrlKey && e.altKey)) {
           e.preventDefault();
           if (chatId) {
             setShowAnnotationDialog(true);
           }
         }
+      } else if (e.key.toLowerCase() === 't') {
+        if (isAnnouncingResponse) {
+          if (responseAnnouncementRef.current) {
+            responseAnnouncementRef.current.textContent = '';
+          }
+          setIsAnnouncingResponse(false);
+        }
+        focusMessageInput(true);
+        return;
       }
     },
     [
       chatId,
       handleSubmit,
+      showInitialIntentDialog,
       showIntentDialog,
       showAnnotationDialog,
       showEndChatDialog,
       messageText,
+      isAnnouncingResponse,
     ],
   );
 
@@ -246,6 +339,31 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
   return (
     <>
+      {/* Screen reader announcements */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        ref={announcementRef}
+      >
+        {announcement}
+      </div>
+      
+      {/* Dedicated response announcement region */}
+      <div
+        aria-live="assertive"
+        aria-atomic="true"
+        className="sr-only"
+        ref={responseAnnouncementRef}
+      >
+      </div>
+
+      {showInitialIntentDialog && (
+        <IntentDialog
+          onSubmit={handleInitialIntentSubmit}
+          onClear={() => setShowInitialIntentDialog(false)}
+        />
+      )}
       {showIntentDialog && (
         <IntentDialog
           onSubmit={handleIntentSubmit}
@@ -303,7 +421,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                       />
                     ))}
                   {!!incomingMessage && (
-                    <Message role="assistant" content={incomingMessage} />
+                    <Message role="assistant" content={incomingMessage} streaming />
                   )}
                 </div>
               </div>
@@ -319,12 +437,16 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                   className="flex gap-2"
                   disabled={
                     generatingResponse ||
+                    isAnnouncingResponse ||
+                    showInitialIntentDialog ||
                     showIntentDialog ||
                     showEndChatDialog ||
                     isChatEnded
                   }
                 >
                   <textarea
+                    id="message-input"
+                    ref={messageInputRef}
                     value={messageText}
                     onChange={e => setMessageText(e.target.value)}
                     placeholder={

@@ -1,11 +1,13 @@
 // EndChatDialog.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
   const [summary, setSummary] = useState('');
   const [whatWentWell, setWhatWentWell] = useState('');
   const [whatDidntGoWell, setWhatDidntGoWell] = useState('');
   const [loading, setLoading] = useState(true);
+  const titleRef = useRef(null);
+  const firstTextareaRef = useRef(null);
 
   useEffect(() => {
     const generateSummary = async () => {
@@ -53,6 +55,37 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
     };
   }, [onClose]);
 
+  // Auto-focus and announce when dialog opens
+  useEffect(() => {
+    if (titleRef.current) {
+      titleRef.current.focus();
+    }
+    
+    // Announce the dialog
+    const announcement = "End Chat dialog opened. Please provide feedback about your chat experience.";
+    const announcer = document.createElement('div');
+    announcer.setAttribute('aria-live', 'assertive');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.className = 'sr-only';
+    announcer.textContent = announcement;
+    document.body.appendChild(announcer);
+    
+    return () => {
+      if (document.body.contains(announcer)) {
+        document.body.removeChild(announcer);
+      }
+    };
+  }, []);
+
+  // Focus first textarea when loading is complete
+  useEffect(() => {
+    if (!loading && firstTextareaRef.current) {
+      setTimeout(() => {
+        firstTextareaRef.current.focus();
+      }, 500);
+    }
+  }, [loading]);
+
   return (
     <div
       role="dialog"
@@ -69,7 +102,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
         onClick={e => e.stopPropagation()}
       >
         <header>
-          <h2 id="end-chat-dialog-title" className="text-xl font-bold mb-4">
+          <h2 id="end-chat-dialog-title" className="text-xl font-bold mb-4" ref={titleRef} tabIndex="-1">
             End Chat
           </h2>
         </header>
@@ -102,6 +135,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 What went well?
               </label>
               <textarea
+                ref={firstTextareaRef}
                 id="whatWentWell"
                 value={whatWentWell}
                 onChange={e => setWhatWentWell(e.target.value)}

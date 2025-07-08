@@ -17,7 +17,7 @@
     "auth0": "^4.4.0",
     "autoprefixer": "^10.4.19",
     "fortawesome": "^0.0.1-security",
-    "mongodb": "^6.6.2",
+    "mongodb": "^6.17.0",
     "openai": "^4.50.0",
     "openai-edge-stream": "^2.0.1",
     "react": "^18",

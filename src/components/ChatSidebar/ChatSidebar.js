@@ -2,9 +2,29 @@ import { faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 export const ChatSidebar = ({ chatId, generatingResponse }) => {
   const [chatList, setChatList] = useState([]);
+  const router = useRouter();
+
+  const handleNewChat = async (e) => {
+    e.preventDefault();
+    if (!generatingResponse) {
+      await router.push('/chat');
+      setTimeout(() => {
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+          messageInput.focus();
+          const announcer = document.createElement('div');
+          announcer.setAttribute('aria-live', 'polite');
+          announcer.textContent = 'New chat started. You can begin typing your message.';
+          document.body.appendChild(announcer);
+          setTimeout(() => document.body.removeChild(announcer), 1000);
+        }
+      }, 150);
+    }
+  };
 
   useEffect(() => {
     const loadChatList = async () => {
@@ -25,14 +45,16 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
       aria-label="Chat navigation"
     >
       <div className="sticky top-0 bg-slate-900 z-10">
-        <Link
-          href="/chat"
-          className={`side-menu-item bg-emerald-500 hover:bg-emerald-600 ${
+        <button
+          id="new-chat-button"
+          onClick={handleNewChat}
+          className={`side-menu-item bg-emerald-500 hover:bg-emerald-600 w-full text-left ${
             generatingResponse ? 'pointer-events-none opacity-50' : ''
           }`}
           aria-disabled={generatingResponse}
           aria-label="Start new chat"
           tabIndex={generatingResponse ? -1 : 0}
+          disabled={generatingResponse}
         >
           <FontAwesomeIcon
             icon={faPlus}
@@ -40,7 +62,7 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
             className="w-4 h-4"
           />
           <span>New chat</span>
-        </Link>
+        </button>
       </div>
 
       <div
