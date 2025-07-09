@@ -27,7 +27,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const [showEndChatDialog, setShowEndChatDialog] = useState(false);
   const [isChatEnded, setIsChatEnded] = useState(isEnded);
   const [announcement, setAnnouncement] = useState('');
-  const [intentCompleted, setIntentCompleted] = useState(false);
+
   const [isAnnouncingResponse, setIsAnnouncingResponse] = useState(false);
   const { user } = useUser();
   const [fullMessage, setFullMessage] = useState('');
@@ -36,7 +36,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   
   // Refs for focus management
   const messageInputRef = useRef(null);
-  const announcementRef = useRef(null);
   const responseAnnouncementRef = useRef(null);
 
   // Function to announce messages to screen readers
@@ -141,7 +140,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     // Save the intent to localStorage or state for when the first chat is created
     localStorage.setItem('pendingIntent', intent);
     setShowInitialIntentDialog(false);
-    setIntentCompleted(true);
     // Focus the new chat button after intent is saved
     setTimeout(() => {
       const newChatBtn = document.getElementById('new-chat-button');
@@ -176,15 +174,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         if (responseAnnouncementRef.current) {
           responseAnnouncementRef.current.textContent = responseText;
         }
-
-        // Calculate generous reading time:
-        // words ≈ characters / 5
-        const words = Math.ceil(fullMessage.length / 5);
-        const estimatedReadingTimeMs = Math.max(5000, words * 500 + 2000); // 500ms per word + 2s buffer
         
-        console.log(`Response length: ${fullMessage.length}, estimated reading time: ${estimatedReadingTimeMs}ms`);
-        
-        // Clear and focus only after sufficient time
+        // Clear and focus after a reasonable delay
         setTimeout(() => {
           if (responseAnnouncementRef.current) {
             responseAnnouncementRef.current.textContent = '';
@@ -192,7 +183,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           setIsAnnouncingResponse(false);
           // Announcement finished – user can press T to continue typing
           announceToScreenReader('Response finished. Press the T key to continue typing.');
-        }, estimatedReadingTimeMs);
+        }, 3000); // Simple 3-second delay
       };
       
       // Slight delay to ensure the response is fully rendered
@@ -200,11 +191,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       setFullMessage('');
     }
   }, [generatingResponse, fullMessage]);
-
-  useEffect(() => {
-    setNewChatMessages([]);
-    setNewChatId(null);
-  }, [chatId]);
 
   useEffect(() => {
     if (!generatingResponse && newChatId) {
@@ -251,7 +237,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     const reader = data.getReader();
     let content = '';
     await streamReader(reader, async message => {
-      console.log('Message: ', message);
       if (message.event === 'newChatId') {
         setNewChatId(message.content);
         // For new chats, check if we have a pending intent to save
@@ -344,7 +329,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         aria-live="polite"
         aria-atomic="true"
         className="sr-only"
-        ref={announcementRef}
       >
         {announcement}
       </div>
@@ -483,8 +467,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     </>
   );
 }
-
-// Previous imports remain the same...
 
 export const getServerSideProps = async context => {
   const chatId = context.params?.chatID?.[0] || null;
