@@ -39,10 +39,20 @@ export default async function handler(req, res) {
     const client = await clientPromise;
     const db = client.db('NsfDatabase');
 
+    // Check if chat exists
+    const existingChat = await db.collection('chats').findOne(
+      { _id: new ObjectId(chatId) }
+    );
+
+    if (!existingChat) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    // Push new feedback to feedback array
     const result = await db.collection('chats').updateOne(
       { _id: new ObjectId(chatId) },
       {
-        $set: {
+        $push: {
           feedback: {
             whatWentWell: whatWentWell.trim(),
             whatDidntGoWell: whatDidntGoWell.trim(),

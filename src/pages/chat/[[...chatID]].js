@@ -25,13 +25,16 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const [showIntentDialog, setShowIntentDialog] = useState(false);
   const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
   const [showEndChatDialog, setShowEndChatDialog] = useState(false);
+  const [isDialogAutoPrompted, setIsDialogAutoPrompted] = useState(false);
   const [isChatEnded, setIsChatEnded] = useState(isEnded);
   const [announcement, setAnnouncement] = useState('');
   const [intentCompleted, setIntentCompleted] = useState(false);
   const [isAnnouncingResponse, setIsAnnouncingResponse] = useState(false);
   const { user } = useUser();
   const [fullMessage, setFullMessage] = useState('');
-  const [chatFeedback, setChatFeedback] = useState(feedback || '');
+  const [chatFeedback, setChatFeedback] = useState(feedback || []);
+  const [hasAutoPromptedFeedback, setHasAutoPromptedFeedback] = useState(false);
+  const [shouldShowFeedbackOnSpace, setShouldShowFeedbackOnSpace] = useState(false);
   const router = useRouter();
   
   // Refs for focus management
@@ -47,7 +50,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
   // Function to focus message input
   const focusMessageInput = (force = false) => {
-    // Don't focus if announcing a response *unless* forced (e.g., user pressed T)
+    // Don't focus if announcing a response *unless* forced (e.g., user pressed space bar)
     if (!force && isAnnouncingResponse) {
       return;
     }
@@ -56,6 +59,23 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         messageInputRef.current.focus();
       }
     }, 100);
+  };
+
+  // Function to count user-assistant message exchanges
+  const countExchanges = (messages) => {
+    let exchanges = 0;
+    let hasUserMessage = false;
+    
+    for (const message of messages) {
+      if (message.role === 'user') {
+        hasUserMessage = true;
+      } else if (message.role === 'assistant' && hasUserMessage) {
+        exchanges++;
+        hasUserMessage = false;
+      }
+    }
+    
+    return exchanges;
   };
 
   const handleIntentSubmit = async intent => {
@@ -95,11 +115,12 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     }
   };
 
-  const handleEndChat = () => {
+  const handleFeedback = () => {
+    setIsDialogAutoPrompted(false);
     setShowEndChatDialog(true);
   };
 
-  const handleEndChatSubmit = async feedback => {
+  const handleFeedbackSubmit = async feedback => {
     try {
       const response = await fetch('/api/chat/saveFeedback', {
         method: 'POST',
@@ -112,8 +133,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
       if (data.message === 'Feedback saved successfully') {
         setShowEndChatDialog(false);
-        setChatFeedback(feedback);
-        setIsChatEnded(true);
+        setIsDialogAutoPrompted(false);
+        // Add new feedback to the existing feedback array
+        setChatFeedback(prev => [...(Array.isArray(prev) ? prev : []), feedback]);
+        announceToScreenReader('Feedback saved successfully. You can continue chatting and provide feedback again anytime.');
+        focusMessageInput();
       } else {
         alert(
           'An error occurred while saving your feedback. Please try again.',
@@ -156,6 +180,36 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     setIsChatEnded(isEnded);
   }, [chatId, isEnded]);
 
+  // Reset auto-prompt state when changing to a different chat
+  useEffect(() => {
+    setHasAutoPromptedFeedback(false);
+    setShouldShowFeedbackOnSpace(false);
+  }, [chatId]);
+
+  // Check if we should prepare feedback prompt after 5 exchanges
+  useEffect(() => {
+    const allMessages = [...messages, ...newChatMessages];
+    const exchanges = countExchanges(allMessages);
+    const hasFeedbackAlready = Array.isArray(chatFeedback) && chatFeedback.length > 0;
+    
+    // Prepare to show feedback dialog when user presses Space if:
+    // 1. We have 5+ exchanges
+    // 2. Haven't auto-prompted before for this chat
+    // 3. No feedback has been submitted for this chat yet
+    // 4. Have a valid chatId
+    // 5. Not already preparing to show
+    if (
+      exchanges >= 5 &&
+      !hasAutoPromptedFeedback &&
+      !hasFeedbackAlready &&
+      chatId &&
+      !shouldShowFeedbackOnSpace
+    ) {
+      setShouldShowFeedbackOnSpace(true);
+      announceToScreenReader('After you finish listening to this response, press the space bar to continue and provide feedback.');
+    }
+  }, [messages, newChatMessages, hasAutoPromptedFeedback, chatId, shouldShowFeedbackOnSpace, chatFeedback]);
+
   useEffect(() => {
     if (!generatingResponse && fullMessage) {
       setNewChatMessages(prev => [
@@ -183,8 +237,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             responseAnnouncementRef.current.textContent = '';
           }
           setIsAnnouncingResponse(false);
-          // Announcement finished – user can press T to continue typing
-          announceToScreenReader('Response finished. Press the T key to continue typing.');
+          // Announcement finished – user can press space bar to continue typing
+          announceToScreenReader('Response finished. Press the space bar to continue typing.');
         }, 3000); // Fixed 3 second delay
       };
       
@@ -209,7 +263,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   useEffect(() => {
     setNewChatMessages([]);
     setNewChatId(null);
-    setChatFeedback(feedback || '');
+    setChatFeedback(feedback || []);
   }, [chatId, feedback]);
 
   const handleSubmit = async e => {
@@ -297,7 +351,18 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             setShowAnnotationDialog(true);
           }
         }
-      } else if (e.key.toLowerCase() === 't') {
+      } else if (e.key === ' ' || e.keyCode === 32) {
+        // Check if we should show feedback prompt on Space press
+        if (shouldShowFeedbackOnSpace && !showEndChatDialog && !showInitialIntentDialog && !showIntentDialog && !showAnnotationDialog) {
+          e.preventDefault();
+          setShouldShowFeedbackOnSpace(false);
+          setHasAutoPromptedFeedback(true);
+          setIsDialogAutoPrompted(true);
+          setShowEndChatDialog(true);
+          return;
+        }
+        
+        // Normal space behavior for focusing text input
         if (isAnnouncingResponse) {
           if (responseAnnouncementRef.current) {
             responseAnnouncementRef.current.textContent = '';
@@ -317,6 +382,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       showEndChatDialog,
       messageText,
       isAnnouncingResponse,
+      shouldShowFeedbackOnSpace,
     ],
   );
 
@@ -373,8 +439,12 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         <EndChatDialog
           chatId={chatId}
           messages={allMessages}
-          onSubmit={handleEndChatSubmit}
-          onClose={() => setShowEndChatDialog(false)}
+          onSubmit={handleFeedbackSubmit}
+          onClose={() => {
+            setShowEndChatDialog(false);
+            setIsDialogAutoPrompted(false);
+          }}
+          isAutoPrompted={isDialogAutoPrompted}
         />
       )}
       {showLoginMessage && <LoginMessage onAcknowledge={handleAcknowledge} />}
@@ -461,11 +531,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                   </button>
                   <button
                     type="button"
-                    onClick={handleEndChat}
-                    className="btn bg-red-600 text-white hover:bg-red-800"
-                    aria-label="End chat"
+                    onClick={handleFeedback}
+                    className="btn bg-blue-600 text-white hover:bg-blue-800"
+                    aria-label="Give feedback"
                   >
-                    End Chat
+                    Feedback
                   </button>
                 </fieldset>
               </form>
@@ -513,15 +583,13 @@ export const getServerSideProps = async context => {
       };
     }
 
-    // Serialize the feedback object if it exists
-    const serializedFeedback = chat.feedback
-      ? {
-          ...chat.feedback,
-          submittedAt: chat.feedback.submittedAt
-            ? chat.feedback.submittedAt.toISOString()
-            : null,
-        }
-      : '';
+    // Serialize the feedback array if it exists
+    const serializedFeedback = chat.feedback && Array.isArray(chat.feedback)
+      ? chat.feedback.map(fb => ({
+          ...fb,
+          submittedAt: fb.submittedAt ? fb.submittedAt.toISOString() : null,
+        }))
+      : [];
 
     return {
       props: {
@@ -534,7 +602,7 @@ export const getServerSideProps = async context => {
             : null,
         })),
         feedback: serializedFeedback,
-        isEnded: Boolean(chat.feedback),
+        isEnded: false, // Chats are no longer "ended" by feedback submission
       },
     };
   }

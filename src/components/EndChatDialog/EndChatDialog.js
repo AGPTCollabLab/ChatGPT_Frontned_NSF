@@ -62,7 +62,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
     }
     
     // Announce the dialog
-    const announcement = "End Chat dialog opened. Please provide feedback about your chat experience.";
+    const announcement = "Feedback dialog opened. Please provide feedback about your chat experience.";
     const announcer = document.createElement('div');
     announcer.setAttribute('aria-live', 'assertive');
     announcer.setAttribute('aria-atomic', 'true');
@@ -89,7 +89,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
   return (
     <div
       role="dialog"
-      aria-labelledby="end-chat-dialog-title"
+      aria-labelledby="feedback-dialog-title"
       aria-describedby="dialog-description"
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
@@ -102,8 +102,8 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
         onClick={e => e.stopPropagation()}
       >
         <header>
-          <h2 id="end-chat-dialog-title" className="text-xl font-bold mb-4" ref={titleRef} tabIndex="-1">
-            End Chat
+          <h2 id="feedback-dialog-title" className="text-xl font-bold mb-4" ref={titleRef} tabIndex="-1">
+            Feedback
           </h2>
         </header>
 
@@ -170,9 +170,9 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
               <button
                 type="submit"
                 className="btn bg-emerald-500 text-white hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                aria-label="Submit feedback and end chat"
+                aria-label="Submit feedback"
               >
-                Submit & End Chat
+                Submit Feedback
               </button>
               <button
                 type="button"
