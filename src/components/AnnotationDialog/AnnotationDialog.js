@@ -89,7 +89,7 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
 
         <div className="mb-4 p-4 bg-gray-700 rounded-md">
           <h3 className="text-sm font-semibold text-gray-300 mb-2">Selected Sentence:</h3>
-          <p className="text-white italic">"{selectedSentence}"</p>
+          <p className="text-white italic"><q>{selectedSentence}</q></p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -126,7 +126,7 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
 
           <div className="mb-6">
             <label htmlFor="shareResponse" className="block text-sm font-medium text-gray-300 mb-2">
-              3. Do you want to share this annotation? (Type "yes" or "no")
+              3. Do you want to share this annotation? (Type &quot;yes&quot; or &quot;no&quot;)
               <span className="text-red-400 ml-1" aria-label="required">*</span>
             </label>
             <input
@@ -140,7 +140,7 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
               aria-describedby="share-help"
             />
             <div id="share-help" className="text-xs text-gray-400 mt-1">
-              Type "yes" to allow sharing this annotation for research purposes, or "no" to keep it private.
+              Type &quot;yes&quot; to allow sharing this annotation for research purposes, or &quot;no&quot; to keep it private.
             </div>
           </div>
 
