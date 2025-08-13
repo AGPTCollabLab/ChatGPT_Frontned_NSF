@@ -11,18 +11,7 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
   const handleNewChat = async (e) => {
     e.preventDefault();
     if (!generatingResponse) {
-      await router.push('/chat');
-      setTimeout(() => {
-        const messageInput = document.getElementById('message-input');
-        if (messageInput) {
-          messageInput.focus();
-          const announcer = document.createElement('div');
-          announcer.setAttribute('aria-live', 'polite');
-          announcer.textContent = 'New chat started. You can begin typing your message.';
-          document.body.appendChild(announcer);
-          setTimeout(() => document.body.removeChild(announcer), 1000);
-        }
-      }, 150);
+      await router.push({ pathname: '/chat', query: { showIntent: '1' } }, undefined, { shallow: false });
     }
   };
 
@@ -47,6 +36,9 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
       <div className="sticky top-0 bg-slate-900 z-10">
         <button
           id="new-chat-button"
+          type="button"
+          role="button"
+          aria-pressed="false"
           onClick={handleNewChat}
           className={`side-menu-item bg-emerald-500 hover:bg-emerald-600 w-full text-left ${
             generatingResponse ? 'pointer-events-none opacity-50' : ''
