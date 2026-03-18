@@ -1,13 +1,7 @@
 import OpenAI from 'openai';
 
-const openaiApiKey = process.env.OPENAI_API_KEY ?? process.env.OPEN_API_KEY;
-
-if (!openaiApiKey) {
-  throw new Error('Missing OpenAI API key');
-}
-
 const openai = new OpenAI({
-  apiKey: openaiApiKey,
+  apiKey: process.env.OPEN_API_KEY,
 });
 
 export const config = {

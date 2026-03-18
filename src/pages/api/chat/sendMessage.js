@@ -5,42 +5,9 @@ export const config = {
   runtime: 'edge',
 };
 
-const openaiApiKey = process.env.OPENAI_API_KEY ?? process.env.OPEN_API_KEY;
-
-function getBaseUrl(req) {
-  const origin = req.headers.get('origin');
-  if (origin) {
-    return origin;
-  }
-
-  const envBaseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_URL;
-  const forwardedHost =
-    req.headers.get('x-forwarded-host') ?? req.headers.get('host');
-  const host = forwardedHost ?? envBaseUrl;
-
-  if (!host) {
-    return null;
-  }
-
-  if (host.startsWith('http://') || host.startsWith('https://')) {
-    return host;
-  }
-
-  const protocol =
-    req.headers.get('x-forwarded-proto') ??
-    (host.startsWith('localhost') ? 'http' : 'https');
-
-  return `${protocol}://${host}`;
-}
-
 async function summarizeChatHistory(chatMessages) {
-  if (!openaiApiKey) {
-    throw new Error('Missing OpenAI API key');
-  }
-
   const openai = new OpenAI({
-    apiKey: openaiApiKey,
+    apiKey: process.env.OPEN_API_KEY,
   });
   const prompt = chatMessages
     .map(msg => `${msg.role}: ${msg.content}`)
@@ -67,32 +34,15 @@ async function summarizeChatHistory(chatMessages) {
 
 export default async function handler(req) {
   try {
-    if (!openaiApiKey) {
-      return new Response(JSON.stringify({ error: 'Missing OpenAI API key' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
     const { chatId: chatIdFromParam, message } = await req.json();
     let chatId = chatIdFromParam;
-    const baseUrl = getBaseUrl(req);
-
-    if (!baseUrl) {
-      return new Response(
-        JSON.stringify({ error: 'Missing base URL for API calls' }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-    }
+    const origin = req.headers.get('origin');
 
     let newChatId;
     let chatMessages = [];
 
     if (chatId) {
-      const response = await fetch(`${baseUrl}/api/chat/addMessageToChat`, {
+      const response = await fetch(`${origin}/api/chat/addMessageToChat`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -103,7 +53,7 @@ export default async function handler(req) {
       const json = await response.json();
       chatMessages = json.chat.messages || [];
     } else {
-      const response = await fetch(`${baseUrl}/api/chat/createNewChat`, {
+      const response = await fetch(`${origin}/api/chat/createNewChat`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -149,7 +99,7 @@ export default async function handler(req) {
       {
         headers: {
           'content-type': 'application/json',
-          Authorization: `Bearer ${openaiApiKey}`,
+          Authorization: `Bearer ${process.env.OPEN_API_KEY}`,
         },
         method: 'POST',
         body: JSON.stringify({
@@ -165,7 +115,7 @@ export default async function handler(req) {
           }
         },
         onAfterStream: async ({ fullContent }) => {
-          const addMessageUrl = `${baseUrl}/api/chat/addMessageToChat`;
+          const addMessageUrl = `${origin}/api/chat/addMessageToChat`;
           console.log(`Attempting to call: ${addMessageUrl}`);
           const addMessageResponse = await fetch(addMessageUrl, {
             method: 'POST',
