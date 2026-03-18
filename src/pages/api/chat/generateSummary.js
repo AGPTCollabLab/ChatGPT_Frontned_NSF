@@ -4,6 +4,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPEN_API_KEY,
 });
 
+const SUMMARY_MODEL = 'gpt-5-mini';
+
 export const config = {
   runtime: 'edge',
 };
@@ -24,7 +26,7 @@ ${prompt}
 `,
       },
     ],
-    model: 'gpt-5-mini',
+    model: SUMMARY_MODEL,
     max_tokens: 200,
   });
   return (
@@ -42,6 +44,7 @@ export default async function handler(req) {
   }
 
   try {
+    console.log(`[generateSummary] OpenAI model: ${SUMMARY_MODEL}`);
     const { messages } = await req.json();
     const summary = await summarizeChatHistory(messages);
     return new Response(JSON.stringify({ summary }), {

@@ -5,6 +5,8 @@ export const config = {
   runtime: 'edge',
 };
 
+const CHAT_MODEL = 'gpt-5-mini';
+
 async function summarizeChatHistory(chatMessages) {
   const openai = new OpenAI({
     apiKey: process.env.OPEN_API_KEY,
@@ -14,7 +16,7 @@ async function summarizeChatHistory(chatMessages) {
     .join('\n');
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-5-mini',
+    model: CHAT_MODEL,
     messages: [
       {
         role: 'system',
@@ -34,6 +36,7 @@ async function summarizeChatHistory(chatMessages) {
 
 export default async function handler(req) {
   try {
+    console.log(`[sendMessage] OpenAI model: ${CHAT_MODEL}`);
     const { chatId: chatIdFromParam, message } = await req.json();
     let chatId = chatIdFromParam;
     const origin = req.headers.get('origin');
@@ -103,7 +106,7 @@ export default async function handler(req) {
         },
         method: 'POST',
         body: JSON.stringify({
-          model: 'gpt-5-mini',
+          model: CHAT_MODEL,
           messages: [...messagesToInclude],
           stream: true,
         }),
