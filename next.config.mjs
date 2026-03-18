@@ -5,7 +5,7 @@ const nextConfig = {
     domains: [
       's.gravatar.com',
       'lh3.googleusercontent.com',
-      'https://uxwing.com',
+      'uxwing.com',
     ],
   },
 };

@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     );
     console.log(`userid: ${user.sub}, chatID: ${chatId}, content: ${content}`);
 
-    const chat = await db.collection('chats').findOneAndUpdate(
+    const { value: chat } = await db.collection('chats').findOneAndUpdate(
       {
         _id: new ObjectId(chatId),
         userId: user.sub,
@@ -38,10 +38,6 @@ export default async function handler(req, res) {
         returnDocument: 'after',
       },
     );
-    console.log('chat = ');
-    console.log(typeof chat);
-    console.log(chat);
-
     if (!chat) {
       console.log('Chat not found or user not authorized');
       return res
