@@ -6,7 +6,6 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
   const [whatDidntGoWell, setWhatDidntGoWell] = useState('');
   const [loading, setLoading] = useState(true);
   const dialogRef = useRef(null);
-  const firstTextareaRef = useRef(null);
 
   useEffect(() => {
     const generateSummary = async () => {
@@ -52,21 +51,12 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
     };
   }, [onClose]);
 
-  // Focus the dialog wrapper first so the screen reader announces the dialog
-  // title and description, then move focus to the first textarea once
-  // loading completes.
+  // Focus the dialog wrapper so the screen reader announces the dialog
+  // title and description via aria-labelledby and aria-describedby.
+  // Do not auto-move focus so the screen reader is not interrupted.
   useEffect(() => {
     dialogRef.current?.focus();
   }, []);
-
-  useEffect(() => {
-    if (!loading && firstTextareaRef.current) {
-      const t = setTimeout(() => {
-        firstTextareaRef.current?.focus();
-      }, 1500);
-      return () => clearTimeout(t);
-    }
-  }, [loading]);
 
   return (
     <div
@@ -96,8 +86,8 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
 
         <div id="feedback-dialog-description" className="sr-only">
           Feedback dialog. Please describe what went well and what could be
-          improved about your chat experience. Press Escape to cancel and
-          continue chatting.
+          improved about your chat experience. Press Tab to focus the first
+          answer field, or press Escape to cancel and continue chatting.
         </div>
 
         {loading ? (
@@ -116,7 +106,6 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 What went well?
               </label>
               <textarea
-                ref={firstTextareaRef}
                 id="whatWentWell"
                 value={whatWentWell}
                 onChange={e => setWhatWentWell(e.target.value)}

@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 const IntentDialog = ({ onSubmit, onClear }) => {
   const [intent, setIntent] = useState('');
   const dialogRef = useRef(null);
-  const textareaRef = useRef(null);
 
   const handleChange = e => {
     setIntent(e.target.value);
@@ -19,14 +18,12 @@ const IntentDialog = ({ onSubmit, onClear }) => {
   };
 
   useEffect(() => {
-    // Focus the dialog so screen readers announce the dialog title and
-    // description via aria-labelledby and aria-describedby. Then move
-    // focus to the textarea so the user can start typing.
+    // Focus the dialog wrapper so the screen reader announces the title
+    // and description via aria-labelledby and aria-describedby.
+    // Do not auto-move focus: the user presses Tab to reach the textarea
+    // when they are ready, which prevents the screen reader from being
+    // interrupted mid-sentence.
     dialogRef.current?.focus();
-    const focusTextareaTimer = setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 3500);
-    return () => clearTimeout(focusTextareaTimer);
   }, []);
 
   // Allow Escape to skip
@@ -58,12 +55,11 @@ const IntentDialog = ({ onSubmit, onClear }) => {
           Set chat intention
         </h2>
         <p id="intent-dialog-description" className="mb-4">
-          Optionally describe your intention for this chat. You can skip
-          this step. Press Tab to focus the text area and start typing, or
-          press Escape to skip.
+          Optionally describe your intention for this chat. This step is
+          optional. Press Tab to focus the text area, or press Escape to
+          skip and continue.
         </p>
         <textarea
-          ref={textareaRef}
           value={intent}
           onChange={handleChange}
           placeholder="Type your intention (optional)..."

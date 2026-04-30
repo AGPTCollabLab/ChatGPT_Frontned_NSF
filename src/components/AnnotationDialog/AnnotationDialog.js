@@ -12,17 +12,14 @@ const AnnotationDialog = ({
   const [couldImprove, setCouldImprove] = useState('');
   const [shareResponse, setShareResponse] = useState('');
   const dialogRef = useRef(null);
-  const firstTextareaRef = useRef(null);
 
   useEffect(() => {
-    // Focus the dialog so screen readers announce its title and description
-    // via aria-labelledby and aria-describedby. Then move focus to the first
-    // textarea so the user can start typing.
+    // Focus the dialog wrapper so the screen reader announces the dialog
+    // title and description via aria-labelledby and aria-describedby.
+    // Do not auto-move focus: the user presses Tab to reach the first
+    // text area when they are ready, which prevents the screen reader
+    // from being interrupted mid-sentence.
     dialogRef.current?.focus();
-    const focusTimer = setTimeout(() => {
-      firstTextareaRef.current?.focus();
-    }, 3500);
-    return () => clearTimeout(focusTimer);
   }, []);
 
   const handleSubmit = e => {
@@ -87,7 +84,8 @@ const AnnotationDialog = ({
         <div id="annotation-dialog-description" className="sr-only">
           Dialog to provide annotation for a specific sentence from a ChatGPT
           response. The selected sentence is shown, followed by three
-          required questions. Press Escape to cancel.
+          required questions. Press Tab to focus the first answer field, or
+          press Escape to cancel.
         </div>
 
         <div className="mb-4 p-4 bg-gray-700 rounded-md">
@@ -112,7 +110,6 @@ const AnnotationDialog = ({
             </label>
             <textarea
               id="goodOrBad"
-              ref={firstTextareaRef}
               value={goodOrBad}
               onChange={e => setGoodOrBad(e.target.value)}
               placeholder="Describe what you found good or bad about this specific sentence..."
