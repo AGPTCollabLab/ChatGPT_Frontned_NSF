@@ -1,5 +1,4 @@
 import { OpenAIEdgeStream } from 'openai-edge-stream';
-import OpenAI from 'openai';
 
 export const config = {
   runtime: 'edge',
@@ -8,30 +7,44 @@ export const config = {
 const CHAT_MODEL = 'gpt-5-mini';
 
 async function summarizeChatHistory(chatMessages) {
-  const openai = new OpenAI({
-    apiKey: process.env.OPEN_API_KEY,
-  });
+  if (!process.env.OPEN_API_KEY) {
+    throw new Error('Missing OPEN_API_KEY');
+  }
+
   const prompt = chatMessages
     .map(msg => `${msg.role}: ${msg.content}`)
     .join('\n');
 
-  const response = await openai.chat.completions.create({
-    model: CHAT_MODEL,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a helpful assistant that summarizes chat conversations.',
-      },
-      {
-        role: 'user',
-        content: `Summarize the following chat history:\n${prompt}`,
-      },
-    ],
-    max_tokens: 1000,
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      Authorization: `Bearer ${process.env.OPEN_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: CHAT_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a helpful assistant that summarizes chat conversations.',
+        },
+        {
+          role: 'user',
+          content: `Summarize the following chat history:\n${prompt}`,
+        },
+      ],
+      max_tokens: 1000,
+    }),
   });
 
-  return response.choices[0]?.message?.content.trim();
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`OpenAI summary failed: ${response.status} ${text}`);
+  }
+
+  const json = await response.json();
+  return json?.choices?.[0]?.message?.content?.trim();
 }
 
 export default async function handler(req) {
@@ -143,5 +156,12 @@ export default async function handler(req) {
     return new Response(stream);
   } catch (e) {
     console.error('An error occurred in sendMessage API: ', e);
+    return new Response(
+      JSON.stringify({ error: 'Failed to send message' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   }
 }
