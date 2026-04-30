@@ -1,46 +1,42 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceIndex, onSubmit, onClose }) => {
+const AnnotationDialog = ({
+  chatId,
+  messageIndex,
+  selectedSentence,
+  sentenceIndex,
+  onSubmit,
+  onClose,
+}) => {
   const [goodOrBad, setGoodOrBad] = useState('');
   const [couldImprove, setCouldImprove] = useState('');
   const [shareResponse, setShareResponse] = useState('');
-  const titleRef = useRef(null);
+  const dialogRef = useRef(null);
   const firstTextareaRef = useRef(null);
 
   useEffect(() => {
-    // Focus the dialog title for screen readers
-    if (titleRef.current) {
-      titleRef.current.focus();
-    }
-
-    // Announce the dialog
-    const announcement = "Annotation dialog opened. Please provide your annotation for the selected sentence.";
-    const announcer = document.createElement('div');
-    announcer.setAttribute('aria-live', 'assertive');
-    announcer.setAttribute('aria-atomic', 'true');
-    announcer.style.position = 'absolute';
-    announcer.style.left = '-10000px';
-    announcer.textContent = announcement;
-    document.body.appendChild(announcer);
-
-    setTimeout(() => {
-      document.body.removeChild(announcer);
-      // Focus first textarea after announcement
-      if (firstTextareaRef.current) {
-        firstTextareaRef.current.focus();
-      }
-    }, 100);
+    // Focus the dialog so screen readers announce its title and description
+    // via aria-labelledby and aria-describedby. Then move focus to the first
+    // textarea so the user can start typing.
+    dialogRef.current?.focus();
+    const focusTimer = setTimeout(() => {
+      firstTextareaRef.current?.focus();
+    }, 3500);
+    return () => clearTimeout(focusTimer);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
-    
+
     if (!goodOrBad.trim() || !couldImprove.trim() || !shareResponse.trim()) {
       alert('Please fill in all fields before submitting.');
       return;
     }
 
-    if (shareResponse.toLowerCase() !== 'yes' && shareResponse.toLowerCase() !== 'no') {
+    if (
+      shareResponse.toLowerCase() !== 'yes' &&
+      shareResponse.toLowerCase() !== 'no'
+    ) {
       alert('Please type "yes" or "no" for the sharing question.');
       return;
     }
@@ -50,7 +46,7 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
       couldImprove: couldImprove.trim(),
       shareResponse: shareResponse.toLowerCase() === 'yes',
       selectedSentence,
-      sentenceIndex
+      sentenceIndex,
     });
   };
 
@@ -71,32 +67,48 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div
-        className="bg-gray-800 p-6 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        ref={dialogRef}
+        tabIndex="-1"
+        className="bg-gray-800 p-6 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto outline-none"
         role="dialog"
         aria-labelledby="annotation-dialog-title"
-        aria-describedby="dialog-description"
+        aria-describedby="annotation-dialog-description"
         aria-modal="true"
       >
         <header>
-          <h2 id="annotation-dialog-title" className="text-xl font-bold mb-4 text-white" ref={titleRef} tabIndex="-1">
+          <h2
+            id="annotation-dialog-title"
+            className="text-xl font-bold mb-4 text-white"
+          >
             Annotate Selected Sentence
           </h2>
         </header>
 
-        <div id="dialog-description" className="sr-only">
-          Dialog to provide annotation for a specific sentence from ChatGPT response. Contains the selected sentence and three annotation questions.
+        <div id="annotation-dialog-description" className="sr-only">
+          Dialog to provide annotation for a specific sentence from a ChatGPT
+          response. The selected sentence is shown, followed by three
+          required questions. Press Escape to cancel.
         </div>
 
         <div className="mb-4 p-4 bg-gray-700 rounded-md">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Selected Sentence:</h3>
-          <p className="text-white italic"><q>{selectedSentence}</q></p>
+          <h3 className="text-sm font-semibold text-gray-300 mb-2">
+            Selected Sentence:
+          </h3>
+          <p className="text-white italic">
+            <q>{selectedSentence}</q>
+          </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="goodOrBad" className="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              htmlFor="goodOrBad"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
               1. What is good or bad about this response?
-              <span className="text-red-400 ml-1" aria-label="required">*</span>
+              <span className="text-red-400 ml-1" aria-label="required">
+                *
+              </span>
             </label>
             <textarea
               id="goodOrBad"
@@ -110,9 +122,14 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
           </div>
 
           <div className="mb-4">
-            <label htmlFor="couldImprove" className="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              htmlFor="couldImprove"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
               2. What could be improved?
-              <span className="text-red-400 ml-1" aria-label="required">*</span>
+              <span className="text-red-400 ml-1" aria-label="required">
+                *
+              </span>
             </label>
             <textarea
               id="couldImprove"
@@ -125,9 +142,15 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
           </div>
 
           <div className="mb-6">
-            <label htmlFor="shareResponse" className="block text-sm font-medium text-gray-300 mb-2">
-              3. Do you want to share this annotation? (Type &quot;yes&quot; or &quot;no&quot;)
-              <span className="text-red-400 ml-1" aria-label="required">*</span>
+            <label
+              htmlFor="shareResponse"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
+              3. Do you want to share this annotation? (Type &quot;yes&quot;
+              or &quot;no&quot;)
+              <span className="text-red-400 ml-1" aria-label="required">
+                *
+              </span>
             </label>
             <input
               type="text"
@@ -140,7 +163,8 @@ const AnnotationDialog = ({ chatId, messageIndex, selectedSentence, sentenceInde
               aria-describedby="share-help"
             />
             <div id="share-help" className="text-xs text-gray-400 mt-1">
-              Type &quot;yes&quot; to allow sharing this annotation for research purposes, or &quot;no&quot; to keep it private.
+              Type &quot;yes&quot; to allow sharing this annotation for
+              research purposes, or &quot;no&quot; to keep it private.
             </div>
           </div>
 

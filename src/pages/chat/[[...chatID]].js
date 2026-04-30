@@ -570,9 +570,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
               </div>
             </div>
 
-            <footer
+            <section
               className="flex-shrink-0 bg-gray-800 p-8"
-              role="contentinfo"
               aria-label="Message input area"
             >
               <form onSubmit={handleSubmit} aria-label="Send message form">
@@ -589,6 +588,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                     isChatEnded
                   }
                 >
+                  <legend className="sr-only">Compose a message</legend>
                   <textarea
                     id="message-input"
                     ref={messageInputRef}
@@ -602,7 +602,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                         : 'Send a message...'
                     }
                     className="w-full resize-none rounded-md bg-gray-700 px-5 py-1 text-white"
-                    aria-label="Message text area"
+                    aria-label="Message text area. Type your message and press Enter to send."
                   ></textarea>
                   <button
                     className="btn"
@@ -629,7 +629,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                   </button>
                 </fieldset>
               </form>
-            </footer>
+            </section>
           </div>
         </div>
       </div>

@@ -3,67 +3,50 @@ import { useEffect, useRef } from 'react';
 
 const LoginMessage = ({ onAcknowledge }) => {
   const router = useRouter();
+  const dialogRef = useRef(null);
   const acknowledgeButtonRef = useRef(null);
-  const titleRef = useRef(null);
 
   const handleReject = () => {
     router.push('/api/auth/logout');
   };
 
-  // Auto-focus and announce the welcome message
   useEffect(() => {
-    // Focus the dialog title first so screen readers are within the dialog context
-    if (titleRef.current) {
-      titleRef.current.focus();
-    }
+    // Focus the dialog wrapper first. Screen readers will announce the
+    // dialog content via aria-labelledby and aria-describedby.
+    dialogRef.current?.focus();
 
-    // Create an announcement for the welcome dialog
-    const announcement =
-      'Welcome to ChatGPT Interface! This is an accessible ChatGPT interface designed for screen reader users. Click Acknowledge to continue and start chatting.';
+    // After the welcome message has had time to be read aloud,
+    // move focus to the Acknowledge button so the user can confirm.
+    // Users can press Tab earlier to skip ahead.
+    const moveFocusTimer = setTimeout(() => {
+      acknowledgeButtonRef.current?.focus();
+    }, 7000);
 
-    const announcer = document.createElement('div');
-    announcer.setAttribute('aria-live', 'assertive');
-    announcer.setAttribute('aria-atomic', 'true');
-    announcer.className = 'sr-only';
-    announcer.textContent = announcement;
-    document.body.appendChild(announcer);
-
-    // Keep announcer for a bit to ensure reading; then move focus to acknowledge button
-    const focusTimer = setTimeout(() => {
-      if (acknowledgeButtonRef.current) {
-        acknowledgeButtonRef.current.focus();
-      }
-    }, 800);
-
-    const cleanupTimer = setTimeout(() => {
-      if (document.body.contains(announcer)) {
-        document.body.removeChild(announcer);
-      }
-    }, 2000);
-
-    return () => {
-      clearTimeout(focusTimer);
-      clearTimeout(cleanupTimer);
-      if (document.body.contains(announcer)) {
-        document.body.removeChild(announcer);
-      }
-    };
+    return () => clearTimeout(moveFocusTimer);
   }, []);
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+      ref={dialogRef}
+      tabIndex="-1"
       role="dialog"
-      aria-labelledby="dialog-title"
-      aria-describedby="dialog-description"
       aria-modal="true"
+      aria-labelledby="welcome-dialog-title"
+      aria-describedby="welcome-dialog-description"
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 outline-none"
     >
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">
-        <h2 id="dialog-title" className="text-xl font-bold mb-4" tabIndex="-1" ref={titleRef}>
-          Welcome to ChatGPT Interface!
+        <h2
+          id="welcome-dialog-title"
+          className="text-xl font-bold mb-4"
+        >
+          Welcome to ChatGPT Interface
         </h2>
-        <p id="dialog-description" className="mb-4">
-          This is an accessible ChatGPT interface designed for screen reader users. Click Acknowledge to continue and start chatting.
+        <p id="welcome-dialog-description" className="mb-4">
+          This is an accessible ChatGPT interface designed for screen reader
+          users. The Acknowledge button will be focused after this message is
+          read. You can press Tab to focus it sooner, or Shift Tab to focus
+          the Reject button.
         </p>
         <div className="flex justify-end space-x-4">
           <button

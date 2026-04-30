@@ -2,11 +2,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
-  const [summary, setSummary] = useState('');
   const [whatWentWell, setWhatWentWell] = useState('');
   const [whatDidntGoWell, setWhatDidntGoWell] = useState('');
   const [loading, setLoading] = useState(true);
-  const titleRef = useRef(null);
+  const dialogRef = useRef(null);
   const firstTextareaRef = useRef(null);
 
   useEffect(() => {
@@ -23,10 +22,8 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
         if (data.error) {
           throw new Error(data.error);
         }
-        setSummary(data.summary);
       } catch (error) {
         console.error('Failed to generate summary:', error);
-        setSummary('Failed to generate summary.');
       } finally {
         setLoading(false);
       }
@@ -55,44 +52,31 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
     };
   }, [onClose]);
 
-  // Auto-focus and announce when dialog opens
+  // Focus the dialog wrapper first so the screen reader announces the dialog
+  // title and description, then move focus to the first textarea once
+  // loading completes.
   useEffect(() => {
-    if (titleRef.current) {
-      titleRef.current.focus();
-    }
-    
-    // Announce the dialog
-    const announcement = "Feedback dialog opened. Please provide feedback about your chat experience.";
-    const announcer = document.createElement('div');
-    announcer.setAttribute('aria-live', 'assertive');
-    announcer.setAttribute('aria-atomic', 'true');
-    announcer.className = 'sr-only';
-    announcer.textContent = announcement;
-    document.body.appendChild(announcer);
-    
-    return () => {
-      if (document.body.contains(announcer)) {
-        document.body.removeChild(announcer);
-      }
-    };
+    dialogRef.current?.focus();
   }, []);
 
-  // Focus first textarea when loading is complete
   useEffect(() => {
     if (!loading && firstTextareaRef.current) {
-      setTimeout(() => {
-        firstTextareaRef.current.focus();
-      }, 500);
+      const t = setTimeout(() => {
+        firstTextareaRef.current?.focus();
+      }, 1500);
+      return () => clearTimeout(t);
     }
   }, [loading]);
 
   return (
     <div
+      ref={dialogRef}
+      tabIndex="-1"
       role="dialog"
       aria-labelledby="feedback-dialog-title"
-      aria-describedby="dialog-description"
+      aria-describedby="feedback-dialog-description"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 outline-none"
       onClick={e => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -102,14 +86,18 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
         onClick={e => e.stopPropagation()}
       >
         <header>
-          <h2 id="feedback-dialog-title" className="text-xl font-bold mb-4" ref={titleRef} tabIndex="-1">
+          <h2
+            id="feedback-dialog-title"
+            className="text-xl font-bold mb-4"
+          >
             Feedback
           </h2>
         </header>
 
-        <div id="dialog-description" className="sr-only">
-          Dialog to provide feedback about the chat session. Contains a chat
-          summary and two feedback sections.
+        <div id="feedback-dialog-description" className="sr-only">
+          Feedback dialog. Please describe what went well and what could be
+          improved about your chat experience. Press Escape to cancel and
+          continue chatting.
         </div>
 
         {loading ? (
@@ -123,13 +111,6 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
               handleSubmit();
             }}
           >
-            {/* <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">Chat Summary</h3>
-              <p className="mb-4" role="status" aria-live="polite">
-                {summary}
-              </p>
-            </div> */}
-
             <div className="mb-4">
               <label htmlFor="whatWentWell" className="block mb-2 font-medium">
                 What went well?
