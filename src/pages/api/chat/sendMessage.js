@@ -183,10 +183,15 @@ export default async function handler(req) {
 
     const stream = new ReadableStream({
       async start(controller) {
+        const emit = (text, eventId) => {
+          const payload = eventId
+            ? `{"e": "${eventId}", "c": "${encodeURI(text)}"}\n`
+            : `{"c": "${encodeURI(text)}"}\n`;
+          controller.enqueue(encoder.encode(payload));
+        };
+
         if (newChatId) {
-          controller.enqueue(
-            encoder.encode(`event: newChatId\ndata: ${newChatId}\n\n`),
-          );
+          emit(newChatId, 'newChatId');
         }
 
         const reader = upstream.body.getReader();
@@ -213,11 +218,7 @@ export default async function handler(req) {
                 const content = parsed?.choices?.[0]?.delta?.content;
                 if (typeof content === 'string' && content.length > 0) {
                   fullContent += content;
-                  const sse = content
-                    .split('\n')
-                    .map(part => `data: ${part}`)
-                    .join('\n');
-                  controller.enqueue(encoder.encode(`${sse}\n\n`));
+                  emit(content);
                 }
               } catch (err) {
                 console.error(
@@ -259,8 +260,8 @@ export default async function handler(req) {
 
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
         Connection: 'keep-alive',
       },
     });
