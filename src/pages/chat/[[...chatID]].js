@@ -526,8 +526,14 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
       <div className={`fixed inset-0 ${showLoginMessage ? 'hidden' : ''}`}>
         <Head>
-          <title>Chat</title>
+          <title>
+            {chatId ? 'Chat conversation - Accessible ChatGPT' : 'New chat - Accessible ChatGPT'}
+          </title>
         </Head>
+
+        <a href="#message-input" className="skip-link sr-only focus:not-sr-only">
+          Skip to message input
+        </a>
 
         <div className="h-screen grid grid-cols-[260px_1fr]">
           <div className="h-screen overflow-hidden">
@@ -538,10 +544,10 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           </div>
 
           <div className="flex flex-col h-screen bg-gray-700">
-            <div
+            <main
+              id="chat-main"
               className="flex-1 overflow-y-auto"
-              role="main"
-              aria-label="Chat messages"
+              aria-label="Chat conversation"
             >
               <div className="flex flex-col justify-end min-h-full">
                 <div>
@@ -568,7 +574,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                   )}
                 </div>
               </div>
-            </div>
+            </main>
 
             <section
               className="flex-shrink-0 bg-gray-800 p-8"
@@ -608,6 +614,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                     className="btn"
                     type="submit"
                     aria-label="Send message"
+                    aria-keyshortcuts="Enter"
                   >
                     Send
                   </button>
@@ -623,7 +630,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                     type="button"
                     onClick={handleFeedback}
                     className="btn bg-blue-600 text-white hover:bg-blue-800"
-                    aria-label="Give feedback"
+                    aria-label="Give feedback about this chat"
                   >
                     Feedback
                   </button>

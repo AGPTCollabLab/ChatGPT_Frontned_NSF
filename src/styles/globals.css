@@ -7,6 +7,11 @@
     @apply rounded-md bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600 disabled:bg-emerald-300;
   }
 
+  .btn:focus-visible,
+  .side-menu-item:focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-yellow-400 ring-offset-gray-900;
+  }
+
   .side-menu-item {
     @apply m-2 p-2 flex items-center gap-4 rounded-md hover:bg-gray-800;
   }
@@ -20,4 +25,26 @@
     @apply static w-auto h-auto p-2 m-0 overflow-visible whitespace-normal;
     clip: auto;
   }
+}
+
+/* Skip-to-main link: visually hidden until focused */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #0a0a0a;
+  color: #ffffff;
+  padding: 8px 12px;
+  z-index: 10000;
+  border: 2px solid #fde047;
+  border-radius: 4px;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Ensure visible focus on interactive elements globally */
+:focus-visible {
+  outline: 2px solid #fde047;
+  outline-offset: 2px;
 }
