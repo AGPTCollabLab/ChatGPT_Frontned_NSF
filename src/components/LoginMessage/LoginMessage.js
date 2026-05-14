@@ -13,13 +13,13 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Focus the dialog wrapper so it owns the modal context.
+    // Focus the dialog wrapper so the screen reader recognises this as the
+    // active modal. The wrapper is named via aria-labelledby (a short title)
+    // so the dialog is identifiable, but the long welcome message itself
+    // is delivered through a one-shot live region below. This way the
+    // welcome text is NOT re-announced when the user tabs to a button.
     dialogRef.current?.focus();
 
-    // Inject an assertive live region with the welcome message so the
-    // screen reader reliably announces it first. We set textContent after
-    // appending so aria-live triggers, and we keep the region in the DOM
-    // long enough for the entire message to be spoken.
     const announcer = document.createElement('div');
     announcer.setAttribute('role', 'alert');
     announcer.setAttribute('aria-live', 'assertive');
@@ -43,11 +43,8 @@ const LoginMessage = ({ onAcknowledge }) => {
       clearTimeout(writeTimer);
       clearTimeout(cleanupTimer);
       if (document.body.contains(announcer)) {
-        // Clear the content first so any queued speech is cancelled. Then
-        // remove the element. Without this, some screen readers will
-        // re-read the welcome text later (for example while a chat
-        // response is being announced), which feels like the welcome
-        // page has come back.
+        // Clear content first so any queued speech is cancelled before
+        // the element is removed.
         try {
           announcer.textContent = '';
         } catch (_) {}
@@ -66,19 +63,18 @@ const LoginMessage = ({ onAcknowledge }) => {
       tabIndex="-1"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="welcome-title"
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 outline-none"
     >
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">
-        <div aria-hidden="true">
-          <h2 className="text-xl font-bold mb-4">
-            Welcome to ChatGPT Interface
-          </h2>
-          <p className="mb-4">
-            This is an accessible ChatGPT interface designed for screen reader
-            users. Press Tab to focus the Acknowledge button and Enter or
-            Space to continue. Press Shift Tab to focus the Reject button.
-          </p>
-        </div>
+        <h2 id="welcome-title" className="text-xl font-bold mb-4">
+          Welcome to ChatGPT Interface
+        </h2>
+        <p className="mb-4" aria-hidden="true">
+          This is an accessible ChatGPT interface designed for screen reader
+          users. Press Tab to focus the Acknowledge button and Enter or
+          Space to continue. Press Shift Tab to focus the Reject button.
+        </p>
         <div className="flex justify-end space-x-4">
           <button
             onClick={onAcknowledge}
