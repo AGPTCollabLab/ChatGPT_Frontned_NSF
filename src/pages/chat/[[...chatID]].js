@@ -40,6 +40,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   
   // Refs for focus management
   const messageInputRef = useRef(null);
+  // Last sentence button that was focused before opening the annotation dialog
+  // so we can return focus to it when the dialog closes.
+  const lastFocusedSentenceRef = useRef(null);
 
   // Create a one-off live region announcement and remove it afterward
   const announceToScreenReader = (message, politeness = 'polite') => {
@@ -134,6 +137,18 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     }
   };
 
+  const restoreFocusToLastSentence = () => {
+    setTimeout(() => {
+      const el = lastFocusedSentenceRef.current;
+      if (el && document.body.contains(el)) {
+        try {
+          el.focus();
+          el.scrollIntoView({ block: 'center' });
+        } catch (_) {}
+      }
+    }, 50);
+  };
+
   const handleSentenceAnnotationSubmit = async (annotation) => {
     try {
       const response = await fetch('/api/chat/saveSentenceAnnotation', {
@@ -152,7 +167,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       if (data.message === 'Sentence annotation saved successfully') {
         setShowSentenceAnnotationDialog(false);
         setCurrentAnnotation(null);
-        announceToScreenReader('Sentence annotation saved successfully.', 'assertive');
+        announceToScreenReader('Sentence annotation saved. Press Tab to move to the next sentence.', 'polite');
+        restoreFocusToLastSentence();
       } else {
         alert('An error occurred while saving your annotation. Please try again.');
       }
@@ -162,6 +178,15 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   };
 
   const handleMessageAnnotate = (selectedSentence, sentenceIndex, messageIndex) => {
+    // Remember which sentence button is being annotated so focus can return
+    // to it after the dialog closes. This prevents users from getting "stuck"
+    // re-annotating only the first sentence each time.
+    if (
+      document.activeElement &&
+      document.activeElement.classList?.contains('sentence')
+    ) {
+      lastFocusedSentenceRef.current = document.activeElement;
+    }
     setCurrentAnnotation({
       selectedSentence,
       sentenceIndex,
@@ -171,12 +196,14 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   };
 
   const handleFeedback = () => {
+    // Announce explicitly so the screen reader reliably says the dialog is
+    // opening even if the dialog wrapper focus alone is missed.
+    announceToScreenReader(
+      'Feedback form opened. Please describe what went well and what could be improved. Press Tab to focus the first answer field, or Escape to cancel.',
+      'polite',
+    );
     setIsDialogAutoPrompted(false);
     setShowEndChatDialog(true);
-    setTimeout(() => {
-      const dialogTitle = document.getElementById('feedback-dialog-title');
-      if (dialogTitle) dialogTitle.focus();
-    }, 10);
   };
 
   const handleFeedbackSubmit = async feedback => {
@@ -218,7 +245,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
   const handleAcknowledge = () => {
     setshowLoginMessage(false);
-    announceToScreenReader('Welcome! You can start a new chat or continue an existing conversation.', 'polite');
     setTimeout(() => {
       const newChatBtn = document.getElementById('new-chat-button');
       if (newChatBtn) {
@@ -275,6 +301,12 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       announceToScreenReader('After you finish listening to this response, press the space bar to continue and provide feedback.', 'polite');
     }
   }, [messages, newChatMessages, hasAutoPromptedFeedback, chatId, shouldShowFeedbackOnSpace, chatFeedback]);
+
+  useEffect(() => {
+    if (generatingResponse) {
+      announceToScreenReader('Thinking...', 'polite');
+    }
+  }, [generatingResponse]);
 
   useEffect(() => {
     if (!generatingResponse && fullMessage) {
@@ -496,6 +528,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           onClose={() => {
             setShowSentenceAnnotationDialog(false);
             setCurrentAnnotation(null);
+            restoreFocusToLastSentence();
           }}
         />
       )}

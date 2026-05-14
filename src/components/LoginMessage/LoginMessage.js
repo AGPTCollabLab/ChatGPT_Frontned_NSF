@@ -1,6 +1,9 @@
 import { useRouter } from 'next/router';
 import { useEffect, useRef } from 'react';
 
+const WELCOME_LABEL =
+  'Welcome to the Accessible ChatGPT Interface. This is a ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Shift Tab to focus the Reject button.';
+
 const LoginMessage = ({ onAcknowledge }) => {
   const router = useRouter();
   const dialogRef = useRef(null);
@@ -11,10 +14,8 @@ const LoginMessage = ({ onAcknowledge }) => {
 
   useEffect(() => {
     // Focus the dialog wrapper so the screen reader announces the dialog
-    // title and description via aria-labelledby and aria-describedby.
-    // Do not auto-move focus: the user presses Tab to reach the Acknowledge
-    // button when they are ready, which prevents the screen reader from
-    // being interrupted mid-sentence.
+    // label once. Visible heading and paragraph are aria-hidden so they are
+    // not announced separately when the user navigates.
     dialogRef.current?.focus();
   }, []);
 
@@ -24,27 +25,25 @@ const LoginMessage = ({ onAcknowledge }) => {
       tabIndex="-1"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="welcome-dialog-title"
-      aria-describedby="welcome-dialog-description"
+      aria-label={WELCOME_LABEL}
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 outline-none"
     >
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">
-        <h2
-          id="welcome-dialog-title"
-          className="text-xl font-bold mb-4"
-        >
-          Welcome to ChatGPT Interface
-        </h2>
-        <p id="welcome-dialog-description" className="mb-4">
-          This is an accessible ChatGPT interface designed for screen reader
-          users. Press Tab to focus the Acknowledge button and Enter or
-          Space to continue. Press Shift Tab to focus the Reject button.
-        </p>
+        <div aria-hidden="true">
+          <h2 className="text-xl font-bold mb-4">
+            Welcome to ChatGPT Interface
+          </h2>
+          <p className="mb-4">
+            This is an accessible ChatGPT interface designed for screen reader
+            users. Press Tab to focus the Acknowledge button and Enter or
+            Space to continue. Press Shift Tab to focus the Reject button.
+          </p>
+        </div>
         <div className="flex justify-end space-x-4">
           <button
             onClick={onAcknowledge}
             className="btn"
-            aria-label="Acknowledge the welcome message and continue to chat"
+            aria-label="Acknowledge and continue to chat"
           >
             Acknowledge
           </button>
