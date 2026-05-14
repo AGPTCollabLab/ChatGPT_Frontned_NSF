@@ -43,7 +43,19 @@ const LoginMessage = ({ onAcknowledge }) => {
       clearTimeout(writeTimer);
       clearTimeout(cleanupTimer);
       if (document.body.contains(announcer)) {
-        document.body.removeChild(announcer);
+        // Clear the content first so any queued speech is cancelled. Then
+        // remove the element. Without this, some screen readers will
+        // re-read the welcome text later (for example while a chat
+        // response is being announced), which feels like the welcome
+        // page has come back.
+        try {
+          announcer.textContent = '';
+        } catch (_) {}
+        setTimeout(() => {
+          if (document.body.contains(announcer)) {
+            document.body.removeChild(announcer);
+          }
+        }, 100);
       }
     };
   }, []);

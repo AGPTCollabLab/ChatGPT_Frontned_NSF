@@ -15,7 +15,16 @@ import AnnotationDialog from '@/components/AnnotationDialog';
 import EndChatDialog from '@/components/EndChatDialog';
 
 export default function Home({ chatId, messages = [], feedback, isEnded }) {
-  const [showLoginMessage, setshowLoginMessage] = useState(true);
+  // Persist the welcome dismissal in sessionStorage so the welcome page
+  // does not come back if the chat page ever remounts during navigation.
+  const [showLoginMessage, setshowLoginMessage] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return sessionStorage.getItem('welcomeAcknowledged') !== 'true';
+    } catch (_) {
+      return true;
+    }
+  });
   const [showInitialIntentDialog, setShowInitialIntentDialog] = useState(false);
   const [newChatId, setNewChatId] = useState(null);
   const [incomingMessage, setIncomingMessage] = useState('');
@@ -73,7 +82,17 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     setTimeout(() => {
       clearTimeout(writeTimer);
       if (document.body.contains(announcer)) {
-        document.body.removeChild(announcer);
+        // Clear the content first so queued speech is cancelled, then
+        // remove the element a moment later. This prevents the screen
+        // reader from re-reading old announcements at unexpected times.
+        try {
+          announcer.textContent = '';
+        } catch (_) {}
+        setTimeout(() => {
+          if (document.body.contains(announcer)) {
+            document.body.removeChild(announcer);
+          }
+        }, 100);
       }
     }, estimatedMs + 200);
   };
@@ -282,6 +301,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
   const handleAcknowledge = () => {
     setshowLoginMessage(false);
+    try {
+      sessionStorage.setItem('welcomeAcknowledged', 'true');
+    } catch (_) {}
     setTimeout(() => {
       const newChatBtn = document.getElementById('new-chat-button');
       if (newChatBtn) {
