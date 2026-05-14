@@ -88,7 +88,19 @@ export const Message = ({ role, content, onAnnotate }) => {
   };
 
   if (role === 'assistant') {
-    let visibleAnnotIdx = -1;
+    // Build a list of render items first so each annotatable sentence has its
+    // OWN visibleIdx captured as a per-iteration const. The previous code
+    // shared a single `let visibleAnnotIdx` across iterations, which caused
+    // every button's handler to read the final value (the last sentence) due
+    // to JavaScript closure semantics.
+    let visibleIdxCounter = -1;
+    const renderItems = segments.map((seg, absIndex) => {
+      if (!seg.annotatable) {
+        return { kind: 'span', seg, absIndex };
+      }
+      visibleIdxCounter += 1;
+      return { kind: 'button', seg, absIndex, visibleIdx: visibleIdxCounter };
+    });
 
     return (
       <article
@@ -116,44 +128,44 @@ export const Message = ({ role, content, onAnnotate }) => {
               <span id={instructionsIdRef.current} className="sr-only">
                 Press Enter or Space to annotate this sentence.
               </span>
-              {segments.map((seg, absIndex) => {
-                if (!seg.annotatable) {
+              {renderItems.map(item => {
+                if (item.kind === 'span') {
                   return (
                     <span
-                      key={`seg-${absIndex}`}
+                      key={`seg-${item.absIndex}`}
                       className="inline-block rounded px-1 whitespace-pre-wrap"
                       aria-label={
-                        seg.type === 'code' ? 'Code block' : undefined
+                        item.seg.type === 'code' ? 'Code block' : undefined
                       }
                     >
-                      {seg.text}{' '}
+                      {item.seg.text}{' '}
                     </span>
                   );
                 }
 
-                visibleAnnotIdx += 1;
-                const isFocused = focusedSentence === visibleAnnotIdx;
+                const { seg, absIndex, visibleIdx } = item;
+                const isFocused = focusedSentence === visibleIdx;
                 const describedBy =
-                  visibleAnnotIdx === 0 ? instructionsIdRef.current : undefined;
+                  visibleIdx === 0 ? instructionsIdRef.current : undefined;
 
                 return (
                   <button
                     key={`seg-${absIndex}`}
-                    id={`sentence-${visibleAnnotIdx}`}
+                    id={`${instructionsIdRef.current}-sentence-${visibleIdx}`}
                     className={`sentence focus-visible:ring-2 focus-visible:ring-yellow-400 focus:bg-blue-600 focus:text-white rounded px-1 ${
                       isFocused ? 'bg-blue-500 text-white' : ''
                     }`}
                     type="button"
                     tabIndex={0}
-                    onFocus={() => handleSentenceFocus(visibleAnnotIdx)}
+                    onFocus={() => handleSentenceFocus(visibleIdx)}
                     onBlur={() => setFocusedSentence(null)}
                     onKeyDown={e =>
-                      handleSentenceKeyDown(e, visibleAnnotIdx, absIndex)
+                      handleSentenceKeyDown(e, visibleIdx, absIndex)
                     }
                     onClick={() =>
                       onAnnotate &&
                       onAnnotate(
-                        annotatableSegments[visibleAnnotIdx].text,
+                        annotatableSegments[visibleIdx].text,
                         absIndex,
                       )
                     }
