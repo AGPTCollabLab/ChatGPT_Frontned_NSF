@@ -66,7 +66,6 @@ const LoginMessage = ({ onAcknowledge }) => {
       tabIndex="-1"
       role="dialog"
       aria-modal="true"
-      aria-label={WELCOME_MESSAGE}
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 outline-none"
     >
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">
@@ -84,14 +83,14 @@ const LoginMessage = ({ onAcknowledge }) => {
           <button
             onClick={onAcknowledge}
             className="btn"
-            aria-label="Acknowledge and continue to chat"
+            aria-label="Acknowledge"
           >
             Acknowledge
           </button>
           <button
             onClick={handleReject}
             className="btn bg-red-500 hover:bg-red-600"
-            aria-label="Reject and log out"
+            aria-label="Reject"
           >
             Reject
           </button>

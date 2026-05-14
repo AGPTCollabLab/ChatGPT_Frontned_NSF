@@ -420,6 +420,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const handleSubmit = async e => {
     e.preventDefault();
     if (messageText.trim() === '') return;
+    // Prevent double-submit while a previous response is still being
+    // generated or announced.
+    if (generatingResponse || isAnnouncingResponse) return;
 
     setGeneratingResponse(true);
     const currentMessageText = messageText;
@@ -692,8 +695,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                 <fieldset
                   className="flex gap-2"
                   disabled={
-                    generatingResponse ||
-                    isAnnouncingResponse ||
                     showInitialIntentDialog ||
                     showIntentDialog ||
                     showAnnotationDialog ||
@@ -712,7 +713,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                       isChatEnded
                         ? 'Chat ended'
                         : generatingResponse
-                        ? ''
+                        ? 'Waiting for response...'
                         : 'Send a message...'
                     }
                     className="w-full resize-none rounded-md bg-gray-700 px-5 py-1 text-white"
@@ -723,6 +724,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                     type="submit"
                     aria-label="Send message"
                     aria-keyshortcuts="Enter"
+                    disabled={
+                      generatingResponse ||
+                      isAnnouncingResponse ||
+                      !messageText.trim()
+                    }
                   >
                     Send
                   </button>
