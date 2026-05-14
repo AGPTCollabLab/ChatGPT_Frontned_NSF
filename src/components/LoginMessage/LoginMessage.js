@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useRef } from 'react';
 
+const WELCOME_TITLE = 'Welcome to ChatGPT Interface';
 const WELCOME_INSTRUCTIONS =
   'This is an accessible ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Shift Tab to focus the Reject button.';
 
@@ -13,12 +14,18 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Focus the dialog wrapper. Screen readers will speak the short title
-    // via aria-labelledby below. The longer instructions are delivered via
-    // a one-shot live region so the screen reader doesn't repeat them
-    // every time the user tabs.
+    // Focus the dialog wrapper. aria-label below provides the dialog's
+    // accessible name as a literal string (more reliable across screen
+    // readers than aria-labelledby pointing into the DOM, especially when
+    // the visible heading needs to be hidden to prevent double-reading).
     dialogRef.current?.focus();
 
+    // Inject a polite live region with the longer instructions so the
+    // screen reader announces them once after the title. Setting
+    // textContent after the element is in the DOM AND after a delay is
+    // required for the live region to actually fire on most screen
+    // readers. The delay also lets the dialog title announcement finish
+    // first so the instructions don't step on it.
     const announcer = document.createElement('div');
     announcer.setAttribute('role', 'status');
     announcer.setAttribute('aria-live', 'polite');
@@ -30,19 +37,15 @@ const LoginMessage = ({ onAcknowledge }) => {
     announcer.style.overflow = 'hidden';
     document.body.appendChild(announcer);
 
-    // Set the text after the element is in the DOM AND after enough delay
-    // that screen readers have time to register the live region and the
-    // dialog title announcement has settled. Setting too quickly causes
-    // the message to be missed entirely.
     const writeTimer = setTimeout(() => {
       announcer.textContent = WELCOME_INSTRUCTIONS;
-    }, 600);
+    }, 800);
 
     const cleanupTimer = setTimeout(() => {
       if (document.body.contains(announcer)) {
         document.body.removeChild(announcer);
       }
-    }, 25000);
+    }, 30000);
 
     return () => {
       clearTimeout(writeTimer);
@@ -66,22 +69,16 @@ const LoginMessage = ({ onAcknowledge }) => {
       tabIndex="-1"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="welcome-title"
+      aria-label={WELCOME_TITLE}
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 outline-none"
     >
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">
-        {/* h2 is aria-hidden so the screen reader does NOT also read it as
-            a heading after using its text as the dialog's accessible name */}
-        <h2
-          id="welcome-title"
-          className="text-xl font-bold mb-4"
-          aria-hidden="true"
-        >
-          Welcome to ChatGPT Interface
-        </h2>
-        <p className="mb-4" aria-hidden="true">
-          {WELCOME_INSTRUCTIONS}
-        </p>
+        {/* All visible content is aria-hidden so it doesn't duplicate
+            what aria-label and the live region already speak. */}
+        <div aria-hidden="true">
+          <h2 className="text-xl font-bold mb-4">{WELCOME_TITLE}</h2>
+          <p className="mb-4">{WELCOME_INSTRUCTIONS}</p>
+        </div>
         <div className="flex justify-end space-x-4">
           <button
             onClick={onAcknowledge}
