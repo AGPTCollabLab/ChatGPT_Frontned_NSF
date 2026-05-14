@@ -651,6 +651,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             <ChatSidebar
               chatId={chatId}
               generatingResponse={generatingResponse}
+              isAnnouncingResponse={isAnnouncingResponse}
             />
           </div>
 

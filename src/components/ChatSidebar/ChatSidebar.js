@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-export const ChatSidebar = ({ chatId, generatingResponse }) => {
+export const ChatSidebar = ({
+  chatId,
+  generatingResponse,
+  isAnnouncingResponse,
+}) => {
   const [chatList, setChatList] = useState([]);
   const router = useRouter();
 
@@ -19,18 +23,36 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
     }
   };
 
+  // Defer fetching the chat list while a response is being generated or
+  // announced. Re-fetching the list inserts a new <li> into the sidebar,
+  // and that DOM change can interrupt the screen reader mid-response on
+  // some browser + screen reader combinations.
   useEffect(() => {
+    if (generatingResponse || isAnnouncingResponse) {
+      return undefined;
+    }
+
+    let cancelled = false;
     const loadChatList = async () => {
       try {
         const response = await fetch('/api/chat/getChatList');
         const json = await response.json();
-        setChatList(json?.chats || []);
+        if (!cancelled) {
+          setChatList(json?.chats || []);
+        }
       } catch (error) {
         console.error('Failed to load chat list:', error);
       }
     };
-    loadChatList();
-  }, [chatId]);
+
+    // Small buffer so the polite "Response finished" announcement that
+    // follows isAnnouncingResponse becoming false has a moment to finish.
+    const timer = setTimeout(loadChatList, 700);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [chatId, generatingResponse, isAnnouncingResponse]);
 
   return (
     <nav
