@@ -43,6 +43,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   // Last sentence button that was focused before opening the annotation dialog
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
+  // Track when the assistant response announcement transitions from true to
+  // false so we can auto-focus the message input afterwards.
+  const wasAnnouncingResponseRef = useRef(false);
 
   // Create a one-off live region announcement and remove it afterward
   const announceToScreenReader = (message, politeness = 'polite') => {
@@ -298,7 +301,10 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       !shouldShowFeedbackOnSpace
     ) {
       setShouldShowFeedbackOnSpace(true);
-      announceToScreenReader('After you finish listening to this response, press the space bar to continue and provide feedback.', 'polite');
+      announceToScreenReader(
+        'You have exchanged five messages. To give feedback about this chat, press Tab until you reach the Feedback button and activate it.',
+        'polite',
+      );
     }
   }, [messages, newChatMessages, hasAutoPromptedFeedback, chatId, shouldShowFeedbackOnSpace, chatFeedback]);
 
@@ -307,6 +313,23 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       announceToScreenReader('Thinking...', 'polite');
     }
   }, [generatingResponse]);
+
+  // Auto-focus the message input as soon as the response announcement
+  // finishes so the user can immediately type their next message without
+  // pressing any key.
+  useEffect(() => {
+    const wasAnnouncing = wasAnnouncingResponseRef.current;
+    wasAnnouncingResponseRef.current = isAnnouncingResponse;
+    if (wasAnnouncing && !isAnnouncingResponse) {
+      const t = setTimeout(() => {
+        const el = messageInputRef.current;
+        if (el && !el.disabled) {
+          try { el.focus(); } catch (_) {}
+        }
+      }, 250);
+      return () => clearTimeout(t);
+    }
+  }, [isAnnouncingResponse]);
 
   useEffect(() => {
     if (!generatingResponse && fullMessage) {
@@ -325,7 +348,10 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         announceToScreenReader(`ChatGPT response: ${fullMessage}`, 'assertive');
         setTimeout(() => {
           setIsAnnouncingResponse(false);
-          announceToScreenReader('Response finished. Press the space bar to continue typing.', 'polite');
+          announceToScreenReader(
+            'Response finished. You can type your next message.',
+            'polite',
+          );
         }, 300);
       };
       
@@ -454,7 +480,17 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           }
         }
       } else if (e.key === ' ' || e.keyCode === 32) {
-        if (shouldShowFeedbackOnSpace && !showEndChatDialog && !showInitialIntentDialog && !showIntentDialog && !showAnnotationDialog) {
+        // Auto-prompted feedback after enough exchanges: pressing space
+        // opens the feedback dialog. Space no longer focuses the message
+        // input because the input is auto-focused once a response finishes.
+        if (
+          shouldShowFeedbackOnSpace &&
+          !showEndChatDialog &&
+          !showInitialIntentDialog &&
+          !showIntentDialog &&
+          !showAnnotationDialog &&
+          document.activeElement !== messageInputRef.current
+        ) {
           e.preventDefault();
           setShouldShowFeedbackOnSpace(false);
           setHasAutoPromptedFeedback(true);
@@ -462,12 +498,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           setShowEndChatDialog(true);
           return;
         }
-        
-        if (isAnnouncingResponse) {
-          setIsAnnouncingResponse(false);
-        }
-        focusMessageInput(true);
-        return;
+        // Otherwise let the space key do its normal browser action
+        // (insert a space when typing in the message input, activate a
+        // focused button, etc.). No custom handling needed.
       }
     },
     [
