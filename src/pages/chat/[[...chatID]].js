@@ -43,9 +43,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   // Last sentence button that was focused before opening the annotation dialog
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
-  // Track when the assistant response announcement transitions from true to
-  // false so we can auto-focus the message input afterwards.
-  const wasAnnouncingResponseRef = useRef(false);
 
   // Create a one-off live region announcement and remove it afterward.
   // Important: the textContent must be set AFTER the element is in the DOM
@@ -351,23 +348,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     }
   }, [generatingResponse]);
 
-  // Auto-focus the message input as soon as the response announcement
-  // finishes so the user can immediately type their next message without
-  // pressing any key.
-  useEffect(() => {
-    const wasAnnouncing = wasAnnouncingResponseRef.current;
-    wasAnnouncingResponseRef.current = isAnnouncingResponse;
-    if (wasAnnouncing && !isAnnouncingResponse) {
-      const t = setTimeout(() => {
-        const el = messageInputRef.current;
-        if (el && !el.disabled) {
-          try { el.focus(); } catch (_) {}
-        }
-      }, 250);
-      return () => clearTimeout(t);
-    }
-  }, [isAnnouncingResponse]);
-
   useEffect(() => {
     if (!generatingResponse && fullMessage) {
       setNewChatMessages(prev => [
@@ -386,7 +366,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         setTimeout(() => {
           setIsAnnouncingResponse(false);
           announceToScreenReader(
-            'Response finished. You can type your next message.',
+            'Response finished. Press Tab to focus the message input to type your next message.',
             'polite',
           );
         }, 300);

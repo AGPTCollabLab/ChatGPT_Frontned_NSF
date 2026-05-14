@@ -16,13 +16,13 @@ const LoginMessage = ({ onAcknowledge }) => {
     // Focus the dialog wrapper so it owns the modal context.
     dialogRef.current?.focus();
 
-    // Inject a polite live region with the welcome message so the screen
-    // reader reliably announces it once. We set textContent after appending
-    // so aria-live triggers, and we keep the region in the DOM long enough
-    // for the entire message to be spoken.
+    // Inject an assertive live region with the welcome message so the
+    // screen reader reliably announces it first. We set textContent after
+    // appending so aria-live triggers, and we keep the region in the DOM
+    // long enough for the entire message to be spoken.
     const announcer = document.createElement('div');
-    announcer.setAttribute('role', 'status');
-    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('role', 'alert');
+    announcer.setAttribute('aria-live', 'assertive');
     announcer.setAttribute('aria-atomic', 'true');
     announcer.style.position = 'absolute';
     announcer.style.left = '-10000px';
@@ -37,7 +37,7 @@ const LoginMessage = ({ onAcknowledge }) => {
       if (document.body.contains(announcer)) {
         document.body.removeChild(announcer);
       }
-    }, 20000);
+    }, 25000);
 
     return () => {
       clearTimeout(writeTimer);
