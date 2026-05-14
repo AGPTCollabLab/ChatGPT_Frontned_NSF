@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useRef } from 'react';
 
-const WELCOME_LABEL =
+const WELCOME_MESSAGE =
   'Welcome to the Accessible ChatGPT Interface. This is a ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Shift Tab to focus the Reject button.';
 
 const LoginMessage = ({ onAcknowledge }) => {
@@ -13,10 +13,39 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Focus the dialog wrapper so the screen reader announces the dialog
-    // label once. Visible heading and paragraph are aria-hidden so they are
-    // not announced separately when the user navigates.
+    // Focus the dialog wrapper so it owns the modal context.
     dialogRef.current?.focus();
+
+    // Inject a polite live region with the welcome message so the screen
+    // reader reliably announces it once. We set textContent after appending
+    // so aria-live triggers, and we keep the region in the DOM long enough
+    // for the entire message to be spoken.
+    const announcer = document.createElement('div');
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.style.position = 'absolute';
+    announcer.style.left = '-10000px';
+    announcer.style.width = '1px';
+    announcer.style.height = '1px';
+    announcer.style.overflow = 'hidden';
+    document.body.appendChild(announcer);
+    const writeTimer = setTimeout(() => {
+      announcer.textContent = WELCOME_MESSAGE;
+    }, 100);
+    const cleanupTimer = setTimeout(() => {
+      if (document.body.contains(announcer)) {
+        document.body.removeChild(announcer);
+      }
+    }, 20000);
+
+    return () => {
+      clearTimeout(writeTimer);
+      clearTimeout(cleanupTimer);
+      if (document.body.contains(announcer)) {
+        document.body.removeChild(announcer);
+      }
+    };
   }, []);
 
   return (
@@ -25,7 +54,7 @@ const LoginMessage = ({ onAcknowledge }) => {
       tabIndex="-1"
       role="dialog"
       aria-modal="true"
-      aria-label={WELCOME_LABEL}
+      aria-label={WELCOME_MESSAGE}
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 outline-none"
     >
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">

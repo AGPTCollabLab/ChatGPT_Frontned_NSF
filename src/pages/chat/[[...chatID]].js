@@ -47,8 +47,13 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   // false so we can auto-focus the message input afterwards.
   const wasAnnouncingResponseRef = useRef(false);
 
-  // Create a one-off live region announcement and remove it afterward
+  // Create a one-off live region announcement and remove it afterward.
+  // Important: the textContent must be set AFTER the element is in the DOM
+  // so the screen reader reliably detects the aria-live change. Setting
+  // content before append causes some screen readers (notably VoiceOver
+  // and NVDA in some configurations) to miss the announcement entirely.
   const announceToScreenReader = (message, politeness = 'polite') => {
+    if (typeof document === 'undefined' || !message) return;
     const announcer = document.createElement('div');
     const role = politeness === 'assertive' ? 'alert' : 'status';
     announcer.setAttribute('role', role);
@@ -59,16 +64,21 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     announcer.style.width = '1px';
     announcer.style.height = '1px';
     announcer.style.overflow = 'hidden';
-    announcer.textContent = message;
     document.body.appendChild(announcer);
-    const estimatedMs = politeness === 'assertive'
-      ? Math.min(Math.max(5000, message.length * 40), 45000)
-      : 1500;
+    // Defer the textContent assignment so the live region is observed first.
+    const writeTimer = setTimeout(() => {
+      announcer.textContent = message;
+    }, 80);
+    const estimatedMs =
+      politeness === 'assertive'
+        ? Math.min(Math.max(5000, message.length * 40), 45000)
+        : Math.max(2000, message.length * 50);
     setTimeout(() => {
+      clearTimeout(writeTimer);
       if (document.body.contains(announcer)) {
         document.body.removeChild(announcer);
       }
-    }, estimatedMs);
+    }, estimatedMs + 200);
   };
 
 
@@ -140,29 +150,49 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     }
   };
 
-  const restoreFocusToLastSentence = () => {
+  // Move focus back to the sentence button that opened the annotation dialog.
+  // When advanceToNext is true (called after a successful submit), focus
+  // moves to the NEXT sentence button instead, so users can keep pressing
+  // Enter to annotate consecutive sentences without using Tab.
+  const restoreFocusToLastSentence = (advanceToNext = false) => {
     setTimeout(() => {
       const el = lastFocusedSentenceRef.current;
-      if (el && document.body.contains(el)) {
-        try {
-          el.focus();
-          el.scrollIntoView({ block: 'center' });
-        } catch (_) {}
+      if (!el || !document.body.contains(el)) return;
+
+      if (advanceToNext) {
+        const all = Array.from(
+          document.querySelectorAll('button.sentence'),
+        );
+        const idx = all.indexOf(el);
+        if (idx >= 0 && idx < all.length - 1) {
+          const next = all[idx + 1];
+          try {
+            next.focus();
+            next.scrollIntoView({ block: 'center' });
+            lastFocusedSentenceRef.current = next;
+            return;
+          } catch (_) {}
+        }
       }
-    }, 50);
+
+      try {
+        el.focus();
+        el.scrollIntoView({ block: 'center' });
+      } catch (_) {}
+    }, 100);
   };
 
-  const handleSentenceAnnotationSubmit = async (annotation) => {
+  const handleSentenceAnnotationSubmit = async annotation => {
     try {
       const response = await fetch('/api/chat/saveSentenceAnnotation', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ 
-          chatId, 
+        body: JSON.stringify({
+          chatId,
           messageIndex: currentAnnotation.messageIndex,
-          annotation 
+          annotation,
         }),
       });
       const data = await response.json();
@@ -170,13 +200,20 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       if (data.message === 'Sentence annotation saved successfully') {
         setShowSentenceAnnotationDialog(false);
         setCurrentAnnotation(null);
-        announceToScreenReader('Sentence annotation saved. Press Tab to move to the next sentence.', 'polite');
-        restoreFocusToLastSentence();
+        announceToScreenReader(
+          'Annotation saved. Focused on the next sentence. Press Enter to annotate it, or Tab to skip.',
+          'polite',
+        );
+        restoreFocusToLastSentence(true);
       } else {
-        alert('An error occurred while saving your annotation. Please try again.');
+        alert(
+          'An error occurred while saving your annotation. Please try again.',
+        );
       }
     } catch (error) {
-      alert('An error occurred while saving your annotation. Please try again.');
+      alert(
+        'An error occurred while saving your annotation. Please try again.',
+      );
     }
   };
 
@@ -443,7 +480,10 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       if (firstSentenceButton) {
         firstSentenceButton.focus();
         try { firstSentenceButton.scrollIntoView({ block: 'center' }); } catch (_) {}
-        announceToScreenReader('Focused first sentence of last response. Press Enter or Space to annotate.', 'polite');
+        announceToScreenReader(
+          'Focused first sentence of the last response. Press Enter to annotate this sentence. Press Tab to move to the next sentence and Enter to annotate it.',
+          'polite',
+        );
       }
     } catch (_) {}
   };
