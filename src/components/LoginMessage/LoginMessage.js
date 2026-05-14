@@ -15,20 +15,26 @@ const LoginMessage = ({ onAcknowledge }) => {
 
   useEffect(() => {
     // Focus the dialog wrapper. aria-label below provides the dialog's
-    // accessible name as a literal string (more reliable across screen
-    // readers than aria-labelledby pointing into the DOM, especially when
-    // the visible heading needs to be hidden to prevent double-reading).
+    // accessible name as a literal string. Re-focus after a short tick
+    // in case the browser tried to move focus to the first focusable
+    // child (Acknowledge button) right after mount.
     dialogRef.current?.focus();
+    const refocusTimer = setTimeout(() => {
+      if (
+        dialogRef.current &&
+        document.activeElement !== dialogRef.current
+      ) {
+        dialogRef.current.focus();
+      }
+    }, 60);
 
-    // Inject a polite live region with the longer instructions so the
-    // screen reader announces them once after the title. Setting
-    // textContent after the element is in the DOM AND after a delay is
-    // required for the live region to actually fire on most screen
-    // readers. The delay also lets the dialog title announcement finish
-    // first so the instructions don't step on it.
+    // Inject an assertive live region with the instructions so the screen
+    // reader reliably announces them after the title. Assertive
+    // interrupts other speech, which is appropriate here because nothing
+    // else is being announced on the welcome screen.
     const announcer = document.createElement('div');
-    announcer.setAttribute('role', 'status');
-    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('role', 'alert');
+    announcer.setAttribute('aria-live', 'assertive');
     announcer.setAttribute('aria-atomic', 'true');
     announcer.style.position = 'absolute';
     announcer.style.left = '-10000px';
@@ -39,7 +45,7 @@ const LoginMessage = ({ onAcknowledge }) => {
 
     const writeTimer = setTimeout(() => {
       announcer.textContent = WELCOME_INSTRUCTIONS;
-    }, 800);
+    }, 1200);
 
     const cleanupTimer = setTimeout(() => {
       if (document.body.contains(announcer)) {
@@ -48,6 +54,7 @@ const LoginMessage = ({ onAcknowledge }) => {
     }, 30000);
 
     return () => {
+      clearTimeout(refocusTimer);
       clearTimeout(writeTimer);
       clearTimeout(cleanupTimer);
       if (document.body.contains(announcer)) {

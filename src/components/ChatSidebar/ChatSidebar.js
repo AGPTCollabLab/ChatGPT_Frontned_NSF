@@ -4,11 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-export const ChatSidebar = ({
-  chatId,
-  generatingResponse,
-  isAnnouncingResponse,
-}) => {
+export const ChatSidebar = ({ chatId, generatingResponse }) => {
   const [chatList, setChatList] = useState([]);
   const router = useRouter();
 
@@ -23,15 +19,12 @@ export const ChatSidebar = ({
     }
   };
 
-  // Defer fetching the chat list while a response is being generated or
-  // announced. Re-fetching the list inserts a new <li> into the sidebar,
-  // and that DOM change can interrupt the screen reader mid-response on
-  // some browser + screen reader combinations.
+  // Fetch the chat list immediately when chatId changes. The chat page
+  // delays the screen-reader announcement of the assistant response so
+  // this fetch + render completes BEFORE the response is read; that
+  // ordering avoids the new <li> appearing mid-response and interrupting
+  // the screen reader.
   useEffect(() => {
-    if (generatingResponse || isAnnouncingResponse) {
-      return undefined;
-    }
-
     let cancelled = false;
     const loadChatList = async () => {
       try {
@@ -44,15 +37,11 @@ export const ChatSidebar = ({
         console.error('Failed to load chat list:', error);
       }
     };
-
-    // Small buffer so the polite "Response finished" announcement that
-    // follows isAnnouncingResponse becoming false has a moment to finish.
-    const timer = setTimeout(loadChatList, 700);
+    loadChatList();
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
-  }, [chatId, generatingResponse, isAnnouncingResponse]);
+  }, [chatId]);
 
   return (
     <nav

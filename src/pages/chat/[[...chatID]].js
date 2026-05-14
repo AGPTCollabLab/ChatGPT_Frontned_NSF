@@ -388,13 +388,17 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         setTimeout(() => {
           setIsAnnouncingResponse(false);
           announceToScreenReader(
-            'Response finished. You could ype your next message now.',
+            'Response finished. You could type your next message now.',
             'polite',
           );
         }, 300);
       };
       
-      setTimeout(announceFullResponse, 500);
+      // Wait long enough that the chat sidebar can refetch and render the
+      // new chat item BEFORE the response announcement starts. Without
+      // this delay, the sidebar's <li> append happens mid-announcement
+      // and interrupts the screen reader.
+      setTimeout(announceFullResponse, 1800);
       setFullMessage('');
     }
   }, [generatingResponse, fullMessage]);
@@ -651,7 +655,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             <ChatSidebar
               chatId={chatId}
               generatingResponse={generatingResponse}
-              isAnnouncingResponse={isAnnouncingResponse}
             />
           </div>
 
