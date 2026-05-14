@@ -388,7 +388,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         setTimeout(() => {
           setIsAnnouncingResponse(false);
           announceToScreenReader(
-            'Response finished. Press Tab to focus the message input to type your next message.',
+            'Response finished. You could ype your next message now.',
             'polite',
           );
         }, 300);
