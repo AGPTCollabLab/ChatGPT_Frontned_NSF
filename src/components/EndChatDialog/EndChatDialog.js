@@ -1,13 +1,7 @@
 // EndChatDialog.js
 import React, { useEffect, useState, useRef } from 'react';
 
-const EndChatDialog = ({
-  chatId,
-  messages,
-  onSubmit,
-  onClose,
-  announceToScreenReader,
-}) => {
+const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
   const [whatWentWell, setWhatWentWell] = useState('');
   const [whatDidntGoWell, setWhatDidntGoWell] = useState('');
   const [loading, setLoading] = useState(true);
@@ -58,23 +52,11 @@ const EndChatDialog = ({
   }, [onClose]);
 
   // Focus the dialog wrapper so the screen reader announces the dialog
-  // title via aria-labelledby ("Feedback"). A short tick later, send the
-  // longer instructions through the parent's persistent live region.
-  // This two-step pattern guarantees both pieces are spoken on every
-  // browser + screen-reader combo (notably Chrome/VoiceOver and
-  // Firefox/NVDA, which otherwise drop one of them).
+  // title and description via aria-labelledby and aria-describedby.
+  // Do not auto-move focus so the screen reader is not interrupted.
   useEffect(() => {
     dialogRef.current?.focus();
-    const announceTimer = setTimeout(() => {
-      if (typeof announceToScreenReader === 'function') {
-        announceToScreenReader(
-          'Feedback dialog. Please describe what went well and what could be improved. Press Tab to focus the first answer field, or Escape to cancel.',
-          'polite',
-        );
-      }
-    }, 250);
-    return () => clearTimeout(announceTimer);
-  }, [announceToScreenReader]);
+  }, []);
 
   return (
     <div

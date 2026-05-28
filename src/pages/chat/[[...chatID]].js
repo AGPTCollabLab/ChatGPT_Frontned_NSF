@@ -52,68 +52,50 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   // Last sentence button that was focused before opening the annotation dialog
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
-  // Persistent live regions. Mounted once and reused for every announcement.
-  // This is the only reliable pattern across Chrome/VoiceOver, Firefox/NVDA,
-  // Edge/Narrator, etc.; dynamically created live regions race with screen
-  // readers and frequently drop messages (especially on Firefox and
-  // VoiceOver/Chrome on macOS).
-  const politeRegionRef = useRef(null);
-  const assertiveRegionRef = useRef(null);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return undefined;
-
-    const hidden =
-      'position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden;';
-
-    const politeDiv = document.createElement('div');
-    politeDiv.setAttribute('role', 'status');
-    politeDiv.setAttribute('aria-live', 'polite');
-    politeDiv.setAttribute('aria-atomic', 'true');
-    politeDiv.style.cssText = hidden;
-    document.body.appendChild(politeDiv);
-    politeRegionRef.current = politeDiv;
-
-    const assertiveDiv = document.createElement('div');
-    assertiveDiv.setAttribute('role', 'alert');
-    assertiveDiv.setAttribute('aria-live', 'assertive');
-    assertiveDiv.setAttribute('aria-atomic', 'true');
-    assertiveDiv.style.cssText = hidden;
-    document.body.appendChild(assertiveDiv);
-    assertiveRegionRef.current = assertiveDiv;
-
-    return () => {
-      politeRegionRef.current = null;
-      assertiveRegionRef.current = null;
-      if (politeDiv.parentNode) politeDiv.parentNode.removeChild(politeDiv);
-      if (assertiveDiv.parentNode)
-        assertiveDiv.parentNode.removeChild(assertiveDiv);
-    };
-  }, []);
-
-  // Push an announcement to one of the persistent live regions. Clearing
-  // textContent first and writing on the next tick guarantees the screen
-  // reader treats it as a fresh change even when the same string was just
-  // spoken.
-  const announceToScreenReader = useCallback(
-    (message, politeness = 'polite') => {
-      if (typeof document === 'undefined' || !message) return;
-      const el =
-        politeness === 'assertive'
-          ? assertiveRegionRef.current
-          : politeRegionRef.current;
-      if (!el) return;
-      try {
-        el.textContent = '';
-      } catch (_) {}
-      setTimeout(() => {
-        if (el && document.body.contains(el)) {
-          el.textContent = message;
-        }
-      }, 60);
-    },
-    [],
-  );
+  // Create a one-off live region announcement and remove it afterward.
+  // Important: the textContent must be set AFTER the element is in the DOM
+  // so the screen reader reliably detects the aria-live change. Setting
+  // content before append causes some screen readers (notably VoiceOver
+  // and NVDA in some configurations) to miss the announcement entirely.
+  const announceToScreenReader = (message, politeness = 'polite') => {
+    if (typeof document === 'undefined' || !message) return;
+    const announcer = document.createElement('div');
+    const role = politeness === 'assertive' ? 'alert' : 'status';
+    announcer.setAttribute('role', role);
+    announcer.setAttribute('aria-live', politeness);
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.style.position = 'absolute';
+    announcer.style.left = '-10000px';
+    announcer.style.width = '1px';
+    announcer.style.height = '1px';
+    announcer.style.overflow = 'hidden';
+    document.body.appendChild(announcer);
+    // Defer the textContent assignment so the live region is observed first.
+    const writeTimer = setTimeout(() => {
+      announcer.textContent = message;
+    }, 80);
+    const estimatedMs =
+      politeness === 'assertive'
+        ? Math.min(Math.max(5000, message.length * 40), 45000)
+        : Math.max(2000, message.length * 50);
+    setTimeout(() => {
+      clearTimeout(writeTimer);
+      if (document.body.contains(announcer)) {
+        // Clear the content first so queued speech is cancelled, then
+        // remove the element a moment later. This prevents the screen
+        // reader from re-reading old announcements at unexpected times.
+        try {
+          announcer.textContent = '';
+        } catch (_) {}
+        setTimeout(() => {
+          if (document.body.contains(announcer)) {
+            document.body.removeChild(announcer);
+          }
+        }, 100);
+      }
+    }, estimatedMs + 200);
+  };
 
 
 
@@ -270,13 +252,14 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   };
 
   const handleFeedback = () => {
+    // Announce explicitly so the screen reader reliably says the dialog is
+    // opening even if the dialog wrapper focus alone is missed.
+    announceToScreenReader(
+      'Feedback form opened. Please describe what went well and what could be improved. Press Tab to focus the first answer field, or Escape to cancel.',
+      'polite',
+    );
     setIsDialogAutoPrompted(false);
     setShowEndChatDialog(true);
-    // Note: the announcement is made by EndChatDialog itself, AFTER its
-    // wrapper is focused, so the screen reader hears the dialog title from
-    // aria-labelledby first, then the instructions from the persistent
-    // live region. Announcing here races the focus and Chrome/VoiceOver
-    // ends up dropping the title.
   };
 
   const handleFeedbackSubmit = async feedback => {
@@ -652,7 +635,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             }, 50);
           }}
           isAutoPrompted={isDialogAutoPrompted}
-          announceToScreenReader={announceToScreenReader}
         />
       )}
       {showLoginMessage && <LoginMessage onAcknowledge={handleAcknowledge} />}
