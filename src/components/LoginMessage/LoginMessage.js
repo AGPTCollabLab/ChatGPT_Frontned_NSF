@@ -14,55 +14,13 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Anchor focus on the heading (a non-interactive element) so the
-    // screen reader has a defined starting point. Without this, when the
-    // dialog mounts focus has no anchor and the screen reader cursor
-    // drifts through the focusable buttons and stops on the last one
-    // (Reject) on its own. Focusing the heading keeps the start point
-    // neutral and lets Tab go Acknowledge -> Reject as expected.
+    // Focus the heading on mount. The heading's aria-label contains the
+    // full welcome message (title + instructions), so the screen reader
+    // reads everything once when focus lands here. We do NOT use a live
+    // region or role="dialog": the live region duplicated the title and
+    // caused the screen reader to jump between the heading and the
+    // announcement.
     headingRef.current?.focus();
-
-    // Inject a polite live region that speaks the welcome message once.
-    // We do NOT use role="dialog" / aria-modal / aria-label on the
-    // wrapper, because those cause screen readers (notably VoiceOver) to
-    // re-announce the dialog name, item count, and landmark transitions
-    // whenever focus moves around. The user just wants "Acknowledge
-    // button" to be announced cleanly when Tab lands there.
-    const announcer = document.createElement('div');
-    announcer.setAttribute('role', 'status');
-    announcer.setAttribute('aria-live', 'polite');
-    announcer.setAttribute('aria-atomic', 'true');
-    announcer.style.position = 'absolute';
-    announcer.style.left = '-10000px';
-    announcer.style.width = '1px';
-    announcer.style.height = '1px';
-    announcer.style.overflow = 'hidden';
-    document.body.appendChild(announcer);
-
-    const writeTimer = setTimeout(() => {
-      announcer.textContent = `${WELCOME_TITLE}. ${WELCOME_INSTRUCTIONS}`;
-    }, 200);
-
-    const cleanupTimer = setTimeout(() => {
-      if (document.body.contains(announcer)) {
-        document.body.removeChild(announcer);
-      }
-    }, 25000);
-
-    return () => {
-      clearTimeout(writeTimer);
-      clearTimeout(cleanupTimer);
-      if (document.body.contains(announcer)) {
-        try {
-          announcer.textContent = '';
-        } catch (_) {}
-        setTimeout(() => {
-          if (document.body.contains(announcer)) {
-            document.body.removeChild(announcer);
-          }
-        }, 100);
-      }
-    };
   }, []);
 
   return (
@@ -71,11 +29,16 @@ const LoginMessage = ({ onAcknowledge }) => {
         <h2
           ref={headingRef}
           tabIndex="-1"
+          aria-label={`${WELCOME_TITLE}. ${WELCOME_INSTRUCTIONS}`}
           className="text-xl font-bold mb-4 outline-none"
         >
           {WELCOME_TITLE}
         </h2>
-        <p className="mb-4">{WELCOME_INSTRUCTIONS}</p>
+        {/* Visible instructions for sighted users; hidden from the screen
+            reader because the heading's aria-label already speaks them. */}
+        <p className="mb-4" aria-hidden="true">
+          {WELCOME_INSTRUCTIONS}
+        </p>
         <div className="flex justify-end space-x-4">
           <button onClick={onAcknowledge} className="btn">
             Acknowledge
