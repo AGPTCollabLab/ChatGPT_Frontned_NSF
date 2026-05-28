@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 const WELCOME_TITLE = 'Welcome to ChatGPT Interface';
 const WELCOME_INSTRUCTIONS =
   'This is an accessible ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Tab again to focus the Reject button.';
+const WELCOME_MESSAGE = `${WELCOME_TITLE}. ${WELCOME_INSTRUCTIONS}`;
 
 const LoginMessage = ({ onAcknowledge }) => {
   const router = useRouter();
@@ -14,11 +15,9 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Focus one neutral, non-interactive node that contains the visible
-    // welcome content. Do not add aria-label/live-region duplicates here:
-    // screen readers were reading both the label and the visible text.
-    // Focusing this block gives one start point; Tab then moves to
-    // Acknowledge.
+    // Focus a screen-reader-only node that has no child controls. This
+    // prevents the screen reader from continuing into Acknowledge/Reject
+    // on its own. The user must press Tab manually to reach Acknowledge.
     introRef.current?.focus();
   }, []);
 
@@ -28,15 +27,15 @@ const LoginMessage = ({ onAcknowledge }) => {
         <div
           ref={introRef}
           tabIndex="-1"
-          className="outline-none"
-        >
-          <h2 className="text-xl font-bold mb-4">
-            {WELCOME_TITLE}
-          </h2>
-          <p className="mb-4">
-            {WELCOME_INSTRUCTIONS}
-          </p>
-        </div>
+          className="sr-only"
+          aria-label={WELCOME_MESSAGE}
+        />
+        <h2 className="text-xl font-bold mb-4" aria-hidden="true">
+          {WELCOME_TITLE}
+        </h2>
+        <p className="mb-4" aria-hidden="true">
+          {WELCOME_INSTRUCTIONS}
+        </p>
         <div className="flex justify-end space-x-4">
           <button onClick={onAcknowledge} className="btn">
             Acknowledge
