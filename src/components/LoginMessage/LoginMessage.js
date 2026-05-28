@@ -28,13 +28,15 @@ const LoginMessage = ({ onAcknowledge }) => {
       }
     }, 60);
 
-    // Inject an assertive live region with the instructions so the screen
-    // reader reliably announces them after the title. Assertive
-    // interrupts other speech, which is appropriate here because nothing
-    // else is being announced on the welcome screen.
+    // Inject a polite live region with the instructions. Polite (instead
+    // of assertive) yields to focus changes, so when the user Tabs to
+    // the Acknowledge button, the screen reader stops reading the
+    // instructions and immediately announces the focused button. With
+    // assertive, the screen reader holds the voice channel and the
+    // button focus is silently ignored.
     const announcer = document.createElement('div');
-    announcer.setAttribute('role', 'alert');
-    announcer.setAttribute('aria-live', 'assertive');
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'polite');
     announcer.setAttribute('aria-atomic', 'true');
     announcer.style.position = 'absolute';
     announcer.style.left = '-10000px';
