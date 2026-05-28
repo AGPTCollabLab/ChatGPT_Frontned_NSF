@@ -13,18 +13,12 @@ import LoginMessage from '@/components/LoginMessage';
 import IntentDialog from '@/components/IntentDialog';
 import AnnotationDialog from '@/components/AnnotationDialog';
 import EndChatDialog from '@/components/EndChatDialog';
+import { announce } from '@/lib/announcer';
 
 export default function Home({ chatId, messages = [], feedback, isEnded }) {
-  // Persist the welcome dismissal in sessionStorage so the welcome page
-  // does not come back if the chat page ever remounts during navigation.
-  const [showLoginMessage, setshowLoginMessage] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      return sessionStorage.getItem('welcomeAcknowledged') !== 'true';
-    } catch (_) {
-      return true;
-    }
-  });
+  // Welcome page is shown on every chat-page load so screen-reader users
+  // always get the orientation announcement.
+  const [showLoginMessage, setshowLoginMessage] = useState(true);
   const [showInitialIntentDialog, setShowInitialIntentDialog] = useState(false);
   const [newChatId, setNewChatId] = useState(null);
   const [incomingMessage, setIncomingMessage] = useState('');
@@ -52,52 +46,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   // Last sentence button that was focused before opening the annotation dialog
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
-
-  // Create a one-off live region announcement and remove it afterward.
-  // Important: the textContent must be set AFTER the element is in the DOM
-  // so the screen reader reliably detects the aria-live change. Setting
-  // content before append causes some screen readers (notably VoiceOver
-  // and NVDA in some configurations) to miss the announcement entirely.
-  const announceToScreenReader = (message, politeness = 'polite') => {
-    if (typeof document === 'undefined' || !message) return;
-    const announcer = document.createElement('div');
-    const role = politeness === 'assertive' ? 'alert' : 'status';
-    announcer.setAttribute('role', role);
-    announcer.setAttribute('aria-live', politeness);
-    announcer.setAttribute('aria-atomic', 'true');
-    announcer.style.position = 'absolute';
-    announcer.style.left = '-10000px';
-    announcer.style.width = '1px';
-    announcer.style.height = '1px';
-    announcer.style.overflow = 'hidden';
-    document.body.appendChild(announcer);
-    // Defer the textContent assignment so the live region is observed first.
-    const writeTimer = setTimeout(() => {
-      announcer.textContent = message;
-    }, 80);
-    const estimatedMs =
-      politeness === 'assertive'
-        ? Math.min(Math.max(5000, message.length * 40), 45000)
-        : Math.max(2000, message.length * 50);
-    setTimeout(() => {
-      clearTimeout(writeTimer);
-      if (document.body.contains(announcer)) {
-        // Clear the content first so queued speech is cancelled, then
-        // remove the element a moment later. This prevents the screen
-        // reader from re-reading old announcements at unexpected times.
-        try {
-          announcer.textContent = '';
-        } catch (_) {}
-        setTimeout(() => {
-          if (document.body.contains(announcer)) {
-            document.body.removeChild(announcer);
-          }
-        }, 100);
-      }
-    }, estimatedMs + 200);
-  };
-
-
 
   // Function to focus message input
   const focusMessageInput = (force = false) => {
@@ -141,7 +89,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     if (data.message === 'Intent saved successfully') {
       setShowIntentDialog(false);
       localStorage.removeItem('pendingIntent');
-      announceToScreenReader('Intent saved successfully. You can now start chatting.', 'assertive');
+      announce('Intent saved.', 'polite');
       focusMessageInput();
     } else {
       alert('An error occurred while saving your intent. Please try again.');
@@ -216,10 +164,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       if (data.message === 'Sentence annotation saved successfully') {
         setShowSentenceAnnotationDialog(false);
         setCurrentAnnotation(null);
-        announceToScreenReader(
-          'Annotation saved. Focused on the next sentence. Press Enter to annotate it, or Tab to skip.',
-          'polite',
-        );
+        announce('Annotation saved. Next sentence focused.', 'polite');
         restoreFocusToLastSentence(true);
       } else {
         alert(
@@ -252,12 +197,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   };
 
   const handleFeedback = () => {
-    // Announce explicitly so the screen reader reliably says the dialog is
-    // opening even if the dialog wrapper focus alone is missed.
-    announceToScreenReader(
-      'Feedback form opened. Please describe what went well and what could be improved. Press Tab to focus the first answer field, or Escape to cancel.',
-      'polite',
-    );
     setIsDialogAutoPrompted(false);
     setShowEndChatDialog(true);
   };
@@ -274,21 +213,23 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       const data = await response.json();
 
       if (data.message === 'Feedback saved successfully') {
-        setShowEndChatDialog(false);
-        setIsDialogAutoPrompted(false);
-        setChatFeedback(prev => [...(Array.isArray(prev) ? prev : []), feedback]);
-        announceToScreenReader('Feedback saved successfully. You can start a new chat.', 'assertive');
+        // Blur the active (submit) button BEFORE the dialog unmounts so
+        // screen readers don't report it as "unavailable" when it leaves
+        // the DOM.
         const active = document.activeElement;
         if (active && typeof active.blur === 'function') {
           try { active.blur(); } catch (_) {}
         }
+        setShowEndChatDialog(false);
+        setIsDialogAutoPrompted(false);
+        setChatFeedback(prev => [...(Array.isArray(prev) ? prev : []), feedback]);
+        // Return focus to the message input so the user can keep chatting.
         setTimeout(() => {
-          const newChatBtn = document.getElementById('new-chat-button');
-          if (newChatBtn) {
-            newChatBtn.focus();
-            try { newChatBtn.scrollIntoView({ block: 'center' }); } catch (_) {}
+          if (messageInputRef.current) {
+            messageInputRef.current.focus();
           }
         }, 50);
+        announce('Feedback saved.', 'polite');
       } else {
         alert(
           'An error occurred while saving your feedback. Please try again.',
@@ -301,9 +242,6 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
   const handleAcknowledge = () => {
     setshowLoginMessage(false);
-    try {
-      sessionStorage.setItem('welcomeAcknowledged', 'true');
-    } catch (_) {}
     setTimeout(() => {
       const newChatBtn = document.getElementById('new-chat-button');
       if (newChatBtn) {
@@ -322,7 +260,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       const newChatBtn = document.getElementById('new-chat-button');
       if (newChatBtn) {
         newChatBtn.focus();
-        announceToScreenReader('Intent saved. Press Enter to start a new chat.', 'polite');
+        announce('Intent saved.', 'polite');
       }
     }, 100);
   };
@@ -357,18 +295,12 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       !shouldShowFeedbackOnSpace
     ) {
       setShouldShowFeedbackOnSpace(true);
-      announceToScreenReader(
-        'You have exchanged five messages. To give feedback about this chat, press Tab until you reach the Feedback button and activate it.',
+      announce(
+        'Five messages exchanged. To give feedback, press Tab until you reach the Feedback button.',
         'polite',
       );
     }
   }, [messages, newChatMessages, hasAutoPromptedFeedback, chatId, shouldShowFeedbackOnSpace, chatFeedback]);
-
-  useEffect(() => {
-    if (generatingResponse) {
-      announceToScreenReader('Thinking...', 'polite');
-    }
-  }, [generatingResponse]);
 
   useEffect(() => {
     if (!generatingResponse && fullMessage) {
@@ -380,25 +312,18 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           content: fullMessage,
         },
       ]);
-      
+
       const announceFullResponse = () => {
         setIsAnnouncingResponse(true);
-        // Only announce after completion
-        announceToScreenReader(`ChatGPT response: ${fullMessage}`, 'assertive');
-        setTimeout(() => {
-          setIsAnnouncingResponse(false);
-          announceToScreenReader(
-            'Response finished. You could type your next message now.',
-            'polite',
-          );
-        }, 300);
+        announce(`ChatGPT response: ${fullMessage}`, 'assertive');
+        setTimeout(() => setIsAnnouncingResponse(false), 300);
       };
-      
-      // Wait long enough that the chat sidebar can refetch and render the
-      // new chat item BEFORE the response announcement starts. Without
-      // this delay, the sidebar's <li> append happens mid-announcement
-      // and interrupts the screen reader.
-      setTimeout(announceFullResponse, 1800);
+
+      // Brief delay so any pending sidebar update can settle before the
+      // response announcement starts. aria-busy on the sidebar (see
+      // ChatSidebar) keeps the screen reader from announcing list
+      // changes during the read.
+      setTimeout(announceFullResponse, 300);
       setFullMessage('');
     }
   }, [generatingResponse, fullMessage]);
@@ -489,8 +414,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       if (firstSentenceButton) {
         firstSentenceButton.focus();
         try { firstSentenceButton.scrollIntoView({ block: 'center' }); } catch (_) {}
-        announceToScreenReader(
-          'Focused first sentence of the last response. Press Enter to annotate this sentence. Press Tab to move to the next sentence and Enter to annotate it.',
+        announce(
+          'First sentence focused. Press Enter to annotate, or Tab to move to the next sentence.',
           'polite',
         );
       }
@@ -583,13 +508,13 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           onSubmit={(intent) => {
             localStorage.setItem('pendingIntent', intent || '');
             setShowIntentDialog(false);
-            announceToScreenReader('Intent noted. Start chatting when you are ready.', 'polite');
+            announce('Intent saved.', 'polite');
             focusMessageInput();
           }}
           onClear={() => {
             localStorage.setItem('pendingIntent', 'no intention');
             setShowIntentDialog(false);
-            announceToScreenReader('Skipped intention. Default intention set to no intention.', 'polite');
+            announce('Intent skipped.', 'polite');
             focusMessageInput();
           }}
         />
@@ -620,17 +545,17 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           messages={allMessages}
           onSubmit={handleFeedbackSubmit}
           onClose={() => {
-            setShowEndChatDialog(false);
-            setIsDialogAutoPrompted(false);
+            // Blur before unmount so screen readers don't report the
+            // active button as "unavailable" while it's being removed.
             const active = document.activeElement;
             if (active && typeof active.blur === 'function') {
               try { active.blur(); } catch (_) {}
             }
+            setShowEndChatDialog(false);
+            setIsDialogAutoPrompted(false);
             setTimeout(() => {
-              const newChatBtn = document.getElementById('new-chat-button');
-              if (newChatBtn) {
-                newChatBtn.focus();
-                try { newChatBtn.scrollIntoView({ block: 'center' }); } catch (_) {}
+              if (messageInputRef.current) {
+                messageInputRef.current.focus();
               }
             }, 50);
           }}
@@ -646,15 +571,12 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           </title>
         </Head>
 
-        <a href="#message-input" className="skip-link sr-only focus:not-sr-only">
-          Skip to message input
-        </a>
-
         <div className="h-screen grid grid-cols-[260px_1fr]">
           <div className="h-screen overflow-hidden">
             <ChatSidebar
               chatId={chatId}
               generatingResponse={generatingResponse}
+              isAnnouncingResponse={isAnnouncingResponse}
             />
           </div>
 
