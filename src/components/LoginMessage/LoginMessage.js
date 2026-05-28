@@ -14,22 +14,12 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Focus the Acknowledge button on mount. Without an explicit focus
-    // target, some screen readers (notably VoiceOver) wander through the
-    // page's focusable elements on load and end up resting on the last
-    // one (Reject), making it look like focus auto-navigated. With this
-    // focus call, the screen reader has a known anchor and announces
-    // "Acknowledge button" right away.
-    const focusTimer = setTimeout(() => {
-      ackButtonRef.current?.focus();
-    }, 50);
-
     // Inject a polite live region that speaks the welcome message once.
     // We do NOT use role="dialog" / aria-modal / aria-label on the
     // wrapper, because those cause screen readers (notably VoiceOver) to
     // re-announce the dialog name, item count, and landmark transitions
     // whenever focus moves around. The user just wants "Acknowledge
-    // button" to be announced cleanly when focus lands there.
+    // button" to be announced cleanly when Tab lands there.
     const announcer = document.createElement('div');
     announcer.setAttribute('role', 'status');
     announcer.setAttribute('aria-live', 'polite');
@@ -52,7 +42,6 @@ const LoginMessage = ({ onAcknowledge }) => {
     }, 25000);
 
     return () => {
-      clearTimeout(focusTimer);
       clearTimeout(writeTimer);
       clearTimeout(cleanupTimer);
       if (document.body.contains(announcer)) {
