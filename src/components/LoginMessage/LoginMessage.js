@@ -77,11 +77,7 @@ const LoginMessage = ({ onAcknowledge }) => {
         </h2>
         <p className="mb-4">{WELCOME_INSTRUCTIONS}</p>
         <div className="flex justify-end space-x-4">
-          <button
-            ref={ackButtonRef}
-            onClick={onAcknowledge}
-            className="btn"
-          >
+          <button onClick={onAcknowledge} className="btn">
             Acknowledge
           </button>
           <button
