@@ -3,8 +3,7 @@ import { useEffect, useRef } from 'react';
 
 const WELCOME_TITLE = 'Welcome to ChatGPT Interface';
 const WELCOME_INSTRUCTIONS =
-  'This is an accessible ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Shift Tab to focus the Reject button.';
-const WELCOME_ANNOUNCEMENT = `${WELCOME_TITLE}. ${WELCOME_INSTRUCTIONS}`;
+  'This is an accessible ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Tab again to focus the Reject button.';
 
 const LoginMessage = ({ onAcknowledge }) => {
   const router = useRouter();
@@ -15,11 +14,11 @@ const LoginMessage = ({ onAcknowledge }) => {
   };
 
   useEffect(() => {
-    // Focus one neutral, non-interactive node whose accessible name is the
-    // whole welcome message. Do not use a separate live region here: the
-    // live region was racing with heading focus and caused the screen reader
-    // to jump between the heading and paragraph. This focus target reads the
-    // full intro once; Tab then moves cleanly to Acknowledge.
+    // Focus one neutral, non-interactive node that contains the visible
+    // welcome content. Do not add aria-label/live-region duplicates here:
+    // screen readers were reading both the label and the visible text.
+    // Focusing this block gives one start point; Tab then moves to
+    // Acknowledge.
     introRef.current?.focus();
   }, []);
 
@@ -29,14 +28,12 @@ const LoginMessage = ({ onAcknowledge }) => {
         <div
           ref={introRef}
           tabIndex="-1"
-          role="group"
-          aria-label={WELCOME_ANNOUNCEMENT}
           className="outline-none"
         >
-          <h2 className="text-xl font-bold mb-4" aria-hidden="true">
+          <h2 className="text-xl font-bold mb-4">
             {WELCOME_TITLE}
           </h2>
-          <p className="mb-4" aria-hidden="true">
+          <p className="mb-4">
             {WELCOME_INSTRUCTIONS}
           </p>
         </div>
