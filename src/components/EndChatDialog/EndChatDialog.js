@@ -1,9 +1,5 @@
 // EndChatDialog.js
 import React, { useEffect, useState, useRef } from 'react';
-import { announce } from '@/lib/announcer';
-
-const FEEDBACK_INSTRUCTIONS =
-  'Feedback dialog. Please describe what went well and what could be improved. Press Tab to focus the first answer field, or press Escape to cancel.';
 
 const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
   const [whatWentWell, setWhatWentWell] = useState('');
@@ -55,16 +51,11 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
     };
   }, [onClose]);
 
-  // Focus the dialog wrapper so the screen reader picks up the dialog's
-  // aria-label, then announce the instructions through the persistent
-  // assertive live region. aria-describedby is not reliable on Chrome +
-  // VoiceOver, so we use the live region instead.
+  // Focus the dialog wrapper so the screen reader announces the dialog
+  // title and description via aria-labelledby and aria-describedby.
+  // Do not auto-move focus so the screen reader is not interrupted.
   useEffect(() => {
     dialogRef.current?.focus();
-    const t = setTimeout(() => {
-      announce(FEEDBACK_INSTRUCTIONS, 'assertive');
-    }, 200);
-    return () => clearTimeout(t);
   }, []);
 
   return (
@@ -72,8 +63,9 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
       ref={dialogRef}
       tabIndex="-1"
       role="dialog"
+      aria-labelledby="feedback-dialog-title"
+      aria-describedby="feedback-dialog-description"
       aria-modal="true"
-      aria-label="Feedback"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 outline-none"
       onClick={e => {
         if (e.target === e.currentTarget) onClose();
@@ -84,10 +76,19 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
         onClick={e => e.stopPropagation()}
       >
         <header>
-          <h2 className="text-xl font-bold mb-4" aria-hidden="true">
+          <h2
+            id="feedback-dialog-title"
+            className="text-xl font-bold mb-4"
+          >
             Feedback
           </h2>
         </header>
+
+        <div id="feedback-dialog-description" className="sr-only">
+          Feedback dialog. Please describe what went well and what could be
+          improved about your chat experience. Press Tab to focus the first
+          answer field, or press Escape to cancel and continue chatting.
+        </div>
 
         {loading ? (
           <p role="status" aria-live="polite">
@@ -139,6 +140,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
               <button
                 type="submit"
                 className="btn bg-emerald-500 text-white hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                aria-label="Submit feedback"
               >
                 Submit Feedback
               </button>
@@ -146,6 +148,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 type="button"
                 onClick={onClose}
                 className="btn bg-blue-500 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                aria-label="Cancel and continue chat"
               >
                 Cancel
               </button>

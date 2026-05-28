@@ -4,11 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-export const ChatSidebar = ({
-  chatId,
-  generatingResponse,
-  isAnnouncingResponse,
-}) => {
+export const ChatSidebar = ({ chatId, generatingResponse }) => {
   const [chatList, setChatList] = useState([]);
   const router = useRouter();
 
@@ -51,7 +47,6 @@ export const ChatSidebar = ({
     <nav
       className="flex flex-col h-full text-white bg-slate-900"
       aria-label="Chat navigation"
-      aria-busy={isAnnouncingResponse ? 'true' : 'false'}
     >
       <div className="sticky top-0 bg-slate-900 z-10">
         <button
