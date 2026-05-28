@@ -28,8 +28,9 @@ const LoginMessage = ({ onAcknowledge }) => {
           ref={introRef}
           tabIndex="-1"
           className="sr-only"
-          aria-label={WELCOME_MESSAGE}
-        />
+        >
+          {WELCOME_MESSAGE}
+        </div>
         <h2 className="text-xl font-bold mb-4" aria-hidden="true">
           {WELCOME_TITLE}
         </h2>
