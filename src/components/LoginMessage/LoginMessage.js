@@ -7,13 +7,21 @@ const WELCOME_INSTRUCTIONS =
 
 const LoginMessage = ({ onAcknowledge }) => {
   const router = useRouter();
-  const ackButtonRef = useRef(null);
+  const headingRef = useRef(null);
 
   const handleReject = () => {
     router.push('/api/auth/logout');
   };
 
   useEffect(() => {
+    // Anchor focus on the heading (a non-interactive element) so the
+    // screen reader has a defined starting point. Without this, when the
+    // dialog mounts focus has no anchor and the screen reader cursor
+    // drifts through the focusable buttons and stops on the last one
+    // (Reject) on its own. Focusing the heading keeps the start point
+    // neutral and lets Tab go Acknowledge -> Reject as expected.
+    headingRef.current?.focus();
+
     // Inject a polite live region that speaks the welcome message once.
     // We do NOT use role="dialog" / aria-modal / aria-label on the
     // wrapper, because those cause screen readers (notably VoiceOver) to
@@ -60,7 +68,13 @@ const LoginMessage = ({ onAcknowledge }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-gray-700 p-6 rounded shadow-md text-white">
-        <h2 className="text-xl font-bold mb-4">{WELCOME_TITLE}</h2>
+        <h2
+          ref={headingRef}
+          tabIndex="-1"
+          className="text-xl font-bold mb-4 outline-none"
+        >
+          {WELCOME_TITLE}
+        </h2>
         <p className="mb-4">{WELCOME_INSTRUCTIONS}</p>
         <div className="flex justify-end space-x-4">
           <button
