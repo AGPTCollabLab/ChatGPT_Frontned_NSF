@@ -16,7 +16,7 @@ function sanitizeMessages(messages) {
     .map(m => ({ role: m.role, content: m.content }));
 }
 
-async function summarizeChatHistory(chatMessages) {
+/*async function summarizeChatHistory(chatMessages) {
   if (!process.env.OPEN_API_KEY) {
     throw new Error('Missing OPEN_API_KEY');
   }
@@ -59,6 +59,7 @@ async function summarizeChatHistory(chatMessages) {
   const json = await response.json();
   return json?.choices?.[0]?.message?.content?.trim();
 }
+*/
 
 export default async function handler(req) {
   try {
@@ -117,7 +118,7 @@ export default async function handler(req) {
     }
 
     // Summarize chat history if it gets too long
-    const MAX_TOKENS = 4000;
+    /*const MAX_TOKENS = 4000;
     let messagesToInclude = [];
     let usedTokens = 0;
     let allMessages = [];
@@ -143,7 +144,8 @@ export default async function handler(req) {
 
     messagesToInclude.reverse();
     const sanitizedMessages = sanitizeMessages(messagesToInclude);
-
+*/
+    const sanitizedMessages = sanitizeMessages(chatMessages);
     const upstream = await fetch(
       'https://api.openai.com/v1/chat/completions',
       {
