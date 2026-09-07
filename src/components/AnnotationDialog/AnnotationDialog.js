@@ -143,27 +143,41 @@ const AnnotationDialog = ({
               htmlFor="shareResponse"
               className="block text-sm font-medium text-gray-300 mb-2"
             >
-              3. Do you want to share this annotation? (Type &quot;yes&quot;
-              or &quot;no&quot;)
+              3. Do you want to share this annotation?
               <span className="text-red-400 ml-1" aria-label="required">
                 *
               </span>
             </label>
-            <input
-              type="text"
-              id="shareResponse"
-              value={shareResponse}
-              onChange={e => setShareResponse(e.target.value)}
-              placeholder="Type 'yes' or 'no'"
-              className="w-full p-2 border border-gray-600 rounded-md bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              aria-required="true"
-              aria-describedby="share-help"
-            />
-            <div id="share-help" className="text-xs text-gray-400 mt-1">
-              Type &quot;yes&quot; to allow sharing this annotation for
-              research purposes, or &quot;no&quot; to keep it private.
-            </div>
+
+            <div className="flex gap-6">
+            <label className="flex items-center text-white">
+              <input
+                type="radio"
+                name="shareResponse"
+                value="yes"
+                checked={shareResponse.toLowerCase() === 'yes'}
+                onChange={e => setShareResponse(e.target.value)}
+                className="mr-2"
+              />
+              Yes
+            </label>
+            <label className="flex items-center text-white">
+              <input
+                type="radio"
+                name="shareResponse"
+                value="no"
+                checked={shareResponse.toLowerCase() === 'no'}
+                onChange={e => setShareResponse(e.target.value)}
+                className="mr-2"
+              />
+              No
+            </label>
           </div>
+
+          <div id="share-help" className="text-xs text-gray-400 mt-1">
+            Select &quot;yes&quot; to allow sharing this annotation for research purposes, or &quot;no&quot; to keep it private.
+          </div>
+        </div>
 
           <div
             className="flex justify-end mt-4 gap-3"
