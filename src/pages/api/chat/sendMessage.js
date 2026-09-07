@@ -63,6 +63,7 @@ function sanitizeMessages(messages) {
 
 export default async function handler(req) {
   try {
+    console.log('[TIMING] sendMessage started', Date.now()); // <-- ADD THIS
     console.log(`[sendMessage] OpenAI model: ${CHAT_MODEL}`);
     const { chatId: chatIdFromParam, message } = await req.json();
     let chatId = chatIdFromParam;
@@ -72,6 +73,7 @@ export default async function handler(req) {
     let chatMessages = [];
 
     if (chatId) {
+      console.log('[TIMING] starting addMessageToChat', Date.now()); // <-- ADD THIS
       const response = await fetch(`${origin}/api/chat/addMessageToChat`, {
         method: 'POST',
         headers: {
@@ -80,6 +82,7 @@ export default async function handler(req) {
         },
         body: JSON.stringify({ chatId, role: 'user', content: message }),
       });
+      console.log('[TIMING] addMessageToChat finished', Date.now()); // <-- ADD THIS
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
         console.error(
@@ -93,6 +96,7 @@ export default async function handler(req) {
       const json = await response.json();
       chatMessages = json?.chat?.messages || [];
     } else {
+      console.log('[TIMING] starting createNewChat', Date.now()); // <-- ADD THIS
       const response = await fetch(`${origin}/api/chat/createNewChat`, {
         method: 'POST',
         headers: {
@@ -101,6 +105,7 @@ export default async function handler(req) {
         },
         body: JSON.stringify({ message }),
       });
+      console.log('[TIMING] createNewChat finished', Date.now()); // <-- ADD THIS
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
         console.error(
@@ -146,6 +151,7 @@ export default async function handler(req) {
     const sanitizedMessages = sanitizeMessages(messagesToInclude);
 */
     const sanitizedMessages = sanitizeMessages(chatMessages);
+    console.log('[TIMING] calling OpenAI', Date.now()); // <-- ADD THIS
     const upstream = await fetch(
       'https://api.openai.com/v1/chat/completions',
       {
@@ -161,7 +167,7 @@ export default async function handler(req) {
         }),
       },
     );
-
+    console.log('[TIMING] OpenAI responded', Date.now()); // <-- ADD THIS
     if (!upstream.ok || !upstream.body) {
       const errText = await upstream.text().catch(() => '');
       console.error(
@@ -219,6 +225,10 @@ export default async function handler(req) {
                 const parsed = JSON.parse(data);
                 const content = parsed?.choices?.[0]?.delta?.content;
                 if (typeof content === 'string' && content.length > 0) {
+                  if (fullContent.length === 0) { // <-- ADD THIS
+                    console.log('[TIMING] FIRST TOKEN', Date.now()); // <-- ADD THIS
+                  } // <-- ADD THIS
+
                   fullContent += content;
                   emit(content);
                 }
