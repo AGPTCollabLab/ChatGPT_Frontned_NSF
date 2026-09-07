@@ -122,7 +122,10 @@ const AnnotationDialog = ({
           cancel.
         </div>
 
-        <div className="mb-4 p-4 bg-gray-700 rounded-md">
+        <div className="mb-4 p-4 bg-gray-700 rounded-md"
+          tabIndex="0"
+          aria-labelledby="selected-sentence-heading"
+        >
           <h3
             id="selected-sentence-heading"
             className="text-sm font-semibold text-gray-300 mb-2"
@@ -131,9 +134,7 @@ const AnnotationDialog = ({
           </h3>
 
           <p
-            className="text-white italic"
-            aria-labelledby="selected-sentence-heading"
-          >
+            className="text-white italic">
             <q>{selectedSentence}</q>
           </p>
         </div>
@@ -237,6 +238,7 @@ const AnnotationDialog = ({
                   checked={shareResponse === 'yes'}
                   onChange={e => setShareResponse(e.target.value)}
                   required
+                  tabIndex={shareResponse === '' || shareResponse === 'yes' ? 0 : -1}
                   className="mr-2"
                 />
                 Yes
@@ -253,6 +255,7 @@ const AnnotationDialog = ({
                   value="no"
                   checked={shareResponse === 'no'}
                   onChange={e => setShareResponse(e.target.value)}
+                  tabIndex={shareResponse === 'no' ? 0 : -1}
                   className="mr-2"
                 />
                 No
