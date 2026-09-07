@@ -164,6 +164,7 @@ export default async function handler(req) {
           model: CHAT_MODEL,
           messages: sanitizedMessages,
           stream: true,
+          reasoning_effort: 'minimal',
         }),
       },
     );
