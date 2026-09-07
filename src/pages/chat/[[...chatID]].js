@@ -721,6 +721,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                         ? 'Waiting for response...'
                         : 'Send a message...'
                     }
+                    spellCheck={true}
+                    autoCorrect ="on"
+                    autoCapitalize="sentences"
                     className="w-full resize-none rounded-md bg-gray-700 px-5 py-1 text-white"
                     aria-label="Message text area. Type your message and press Enter to send."
                   ></textarea>
