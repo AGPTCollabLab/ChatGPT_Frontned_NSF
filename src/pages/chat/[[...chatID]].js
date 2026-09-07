@@ -217,8 +217,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         setShowSentenceAnnotationDialog(false);
         setCurrentAnnotation(null);
         announceToScreenReader(
-          'Annotation saved. Focused on the next sentence. Press Enter to annotate it, or Tab to skip.',
-          'polite',
+          'Annotation saved successfully.',
+          'assertive',
         );
         restoreFocusToLastSentence(true);
       } else {
@@ -610,6 +610,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           onClose={() => {
             setShowSentenceAnnotationDialog(false);
             setCurrentAnnotation(null);
+            announceToScreenReader('Annotation dialog closed. Focus returned to the last sentence button.', 'assertive');
             restoreFocusToLastSentence();
           }}
         />
