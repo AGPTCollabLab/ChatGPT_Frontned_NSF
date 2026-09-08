@@ -689,6 +689,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                                 handleMessageAnnotate(selectedSentence, sentenceIndex, messageIndex)
                             : undefined
                         }
+                        onFeedback={
+                          message.role === 'assistant'
+                            ? handleFeedback
+                            : undefined
+                        }
                       />
                     ))}
                   {!!incomingMessage && (
