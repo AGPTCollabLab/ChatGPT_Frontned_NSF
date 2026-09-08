@@ -846,7 +846,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                   >
                     Send
                   </button>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={focusFirstSentenceOfLastAssistant}
                     className="btn bg-purple-600 hover:bg-purple-700"
@@ -861,7 +861,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                     aria-label="Give feedback about this chat"
                   >
                     Feedback
-                  </button>
+                  </button> */}
                 </fieldset>
               </form>
             </section>
