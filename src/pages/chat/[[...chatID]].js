@@ -222,7 +222,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           'Annotation saved successfully.',
           'assertive',
         );
-        restoreFocusToLastSentence(true);
+        setShowResponseAnnotationDialog(true);
       } else {
         alert(
           'An error occurred while saving your annotation. Please try again.',
@@ -629,8 +629,8 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           onClose={() => {
             setShowSentenceAnnotationDialog(false);
             setCurrentAnnotation(null);
-            announceToScreenReader('Annotation dialog closed. Focus returned to the last sentence button.', 'assertive');
-            restoreFocusToLastSentence();
+            announceToScreenReader('Annotation dialog closed. Focus returned to sentence selection.', 'assertive');
+            setShowResponseAnnotationDialog(true);
           }}
         />
       )}
@@ -648,19 +648,23 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             >
               Annotate Response
             </h2>
-            <p className="mb-4">
+            <div className="mb-4">
               {splitIntoSentences(responseToAnnotate?.content).map(
                 (sentence, sentenceIndex) => (
                   <button
                     key={sentenceIndex}
                     type="button"
                     className="sentence block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
+                    onClick={() => {
+                      //setShowResponseAnnotationDialog(false);
+                      handleMessageAnnotate(sentence, sentenceIndex, responseToAnnotate.messageIndex);
+                    }}
                   >
                     {sentence}
                   </button>
                 )
               )}
-            </p>
+            </div>
             <button
               type="button"
               className="btn"
