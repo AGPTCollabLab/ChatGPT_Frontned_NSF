@@ -125,7 +125,7 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
             )}
           </div>
           <div className="flex-1">
-            <div className="response-content whitespace-pre-wrap">
+            <div className="response-content whitespace-pre-wrap text-gray-100">
               {content}
             </div>
             {!streaming && (
@@ -177,7 +177,7 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
           )}
         </div>
         <div className="flex-1">
-          <div className="whitespace-pre-wrap">{content}</div>
+          <div className="whitespace-pre-wrap text-gray-100">{content}</div>
         </div>
       </div>
     </article>
