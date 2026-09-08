@@ -188,7 +188,7 @@ export const Message = ({ role, content, onAnnotate }) => {
       className={`bg-gray-600 p-4 ${user?.picture ? 'ml-12' : ''}`}
       data-message-role="user"
       tabIndex={0}
-      aria-label={'Your message: ${content}'}
+      aria-label={`Your message: ${content}`}
     >
       <div className="flex">
         <div
