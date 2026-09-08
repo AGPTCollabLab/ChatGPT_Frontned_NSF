@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 
-export const Message = ({ role, content, onAnnotate }) => {
+export const Message = ({ role, content, onAnnotate, onFeedback, streaming = false, }) => {
   const { user } = useUser();
   const [focusedSentence, setFocusedSentence] = useState(null);
   const instructionsIdRef = useRef(
@@ -177,6 +177,25 @@ export const Message = ({ role, content, onAnnotate }) => {
                 );
               })}
             </div>
+            {!streaming && (
+              div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  className="btn bg-purple-600 hover:bg-purple-700"
+                  //onClick={onAnnotate}
+                  aria-label="Annotate this response"
+                >
+                  Annotate
+                </button>
+                <button
+                  type="button"
+                  className="btn bg-blue-600 text-white hover:bg-blue-800"
+                  onClick={onFeedback}
+                  aria-label="Give feedback about this response"
+                >
+                  Feedback
+                </button>
+            )}
           </div>
         </div>
       </article>
