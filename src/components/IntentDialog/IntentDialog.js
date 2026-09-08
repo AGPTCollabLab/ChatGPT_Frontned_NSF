@@ -63,6 +63,9 @@ const IntentDialog = ({ onSubmit, onClear }) => {
           value={intent}
           onChange={handleChange}
           placeholder="Type your intention (optional)..."
+          spellCheck={true}
+          autoCorrect ="on"
+          autoCapitalize="sentences"
           className="w-full h-24 p-2 mb-4 bg-gray-600 rounded"
           aria-label="Intentions text area"
           aria-describedby="intent-dialog-description"
