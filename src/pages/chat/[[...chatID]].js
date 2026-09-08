@@ -238,7 +238,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           'Annotation saved successfully.',
           'assertive',
         );
-        setShowResponseAnnotationDialog(true);
+        returnToResponseAnnotation();
       } else {
         alert(
           'An error occurred while saving your annotation. Please try again.',
