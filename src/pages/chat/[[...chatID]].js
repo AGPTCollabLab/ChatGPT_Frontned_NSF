@@ -54,7 +54,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   // Last sentence button that was focused before opening the annotation dialog
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
-
+  const lastAnnotatedSentenceIndexRef = useRef(null);
   // Create a one-off live region announcement and remove it afterward.
   // Important: the textContent must be set AFTER the element is in the DOM
   // so the screen reader reliably detects the aria-live change. Setting
@@ -236,21 +236,13 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   };
 
   const handleMessageAnnotate = (selectedSentence, sentenceIndex, messageIndex) => {
-    // Remember which sentence button is being annotated so focus can return
-    // to it after the dialog closes. This prevents users from getting "stuck"
-    // re-annotating only the first sentence each time.
-    if (
-      document.activeElement &&
-      document.activeElement.classList?.contains('sentence')
-    ) {
-      lastFocusedSentenceRef.current = document.activeElement;
-    }
-    setCurrentAnnotation({
-      selectedSentence,
-      sentenceIndex,
-      messageIndex
-    });
-    setShowSentenceAnnotationDialog(true);
+    lastAnnotatedSentenceIndexRef.current = sentenceIndex;
+
+    setCurrentAnnotation({selectedSentence, sentenceIndex, messageIndex});
+    setShowResponseAnnotationDialog(false);
+    setTimeout(() => {
+      setShowSentenceAnnotationDialog(true);
+    }, 0);
   };
 
   const handleFeedback = () => {
