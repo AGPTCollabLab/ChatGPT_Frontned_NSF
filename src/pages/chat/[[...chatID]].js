@@ -650,6 +650,9 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
         <a href="#message-input" className="skip-link sr-only focus:not-sr-only">
           Skip to message input
         </a>
+        <h1 className="sr-only">
+          {chatId ? 'Chat conversation' : 'New chat'}
+        </h1>
 
         <div className="h-screen grid grid-cols-[260px_1fr]">
           <div className="h-screen overflow-hidden">
@@ -663,8 +666,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             <main
               id="chat-main"
               className="flex-1 overflow-y-auto"
-              aria-label="Chat conversation"
+              aria-labelledby="conversation-heading"
             >
+              <h2 id="conversation-heading" className="sr-only">
+                Conversation
+              </h2>
               <div className="flex flex-col justify-end min-h-full">
                 <div>
                   {allMessages
@@ -694,8 +700,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
 
             <section
               className="flex-shrink-0 bg-gray-800 p-8"
-              aria-label="Message input area"
+              aria-labelledby="message-input-heading"
             >
+              <h2 id="message-input-heading" className="sr-only">
+                Message input
+              </h2>
               <form onSubmit={handleSubmit} aria-label="Send message form">
                 <fieldset
                   className="flex gap-2"
