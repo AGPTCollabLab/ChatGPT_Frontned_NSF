@@ -178,7 +178,7 @@ export const Message = ({ role, content, onAnnotate, onFeedback, streaming = fal
               })}
             </div>
             {!streaming && (
-              div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-3">
                 <button
                   type="button"
                   className="btn bg-purple-600 hover:bg-purple-700"
@@ -195,6 +195,7 @@ export const Message = ({ role, content, onAnnotate, onFeedback, streaming = fal
                 >
                   Feedback
                 </button>
+              </div>
             )}
           </div>
         </div>
