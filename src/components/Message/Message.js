@@ -124,58 +124,8 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
             )}
           </div>
           <div className="flex-1">
-            <div className="response-content">
-              <span id={instructionsIdRef.current} className="sr-only">
-                Press Enter or Space to annotate this sentence.
-              </span>
-              {renderItems.map(item => {
-                if (item.kind === 'span') {
-                  return (
-                    <span
-                      key={`seg-${item.absIndex}`}
-                      className="inline-block rounded px-1 whitespace-pre-wrap"
-                      aria-label={
-                        item.seg.type === 'code' ? 'Code block' : undefined
-                      }
-                    >
-                      {item.seg.text}{' '}
-                    </span>
-                  );
-                }
-
-                const { seg, absIndex, visibleIdx } = item;
-                const isFocused = focusedSentence === visibleIdx;
-                const describedBy =
-                  visibleIdx === 0 ? instructionsIdRef.current : undefined;
-
-                return (
-                  <button
-                    key={`seg-${absIndex}`}
-                    id={`${instructionsIdRef.current}-sentence-${visibleIdx}`}
-                    className={`sentence focus-visible:ring-2 focus-visible:ring-yellow-400 focus:bg-blue-600 focus:text-white rounded px-1 ${
-                      isFocused ? 'bg-blue-500 text-white' : ''
-                    }`}
-                    type="button"
-                    tabIndex={0}
-                    onFocus={() => handleSentenceFocus(visibleIdx)}
-                    onBlur={() => setFocusedSentence(null)}
-                    onKeyDown={e =>
-                      handleSentenceKeyDown(e, visibleIdx, absIndex)
-                    }
-                    onClick={() =>
-                      onAnnotate &&
-                      onAnnotate(
-                        annotatableSegments[visibleIdx].text,
-                        absIndex,
-                      )
-                    }
-                    style={{ display: 'inline-block', margin: '2px' }}
-                    aria-describedby={describedBy}
-                  >
-                    {seg.text}{' '}
-                  </button>
-                );
-              })}
+            <div className="response-content whitespace-pre-wrap">
+              {content}
             </div>
             {!streaming && (
               <div className="flex gap-2 mt-3">
