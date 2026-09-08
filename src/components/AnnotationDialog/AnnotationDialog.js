@@ -168,6 +168,9 @@ const AnnotationDialog = ({
               value={goodOrBad}
               onChange={e => setGoodOrBad(e.target.value)}
               placeholder="Describe what you found good or bad about this specific sentence..."
+              spellCheck={true}
+              autoCorrect ="on"
+              autoCapitalize="sentences"
               className="w-full h-24 p-2 mb-1 border border-gray-600 rounded-md bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
               aria-describedby={
@@ -197,6 +200,9 @@ const AnnotationDialog = ({
               value={couldImprove}
               onChange={e => setCouldImprove(e.target.value)}
               placeholder="Suggest how this sentence or response could be improved..."
+              spellCheck={true}
+              autoCorrect ="on"
+              autoCapitalize="sentences"
               className="w-full h-24 p-2 mb-1 border border-gray-600 rounded-md bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
               aria-describedby={
