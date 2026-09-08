@@ -200,6 +200,22 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     }, 100);
   };
 
+  const returnToResponseAnnotation = () => {
+    setShowResponseAnnotationDialog(true);
+
+    setTimeout(() => {
+      const sentenceIndex = lastAnnotatedSentenceIndexRef.current;
+
+      const target = document.querySelector(
+        `[data-annotation-sentence-index="${sentenceIndex}"]`,
+      );
+      if (target) {
+        target.focus();
+        target.scrollIntoView({ block: 'center' });
+      }
+    }, 100);
+  };
+
   const handleSentenceAnnotationSubmit = async annotation => {
     try {
       const response = await fetch('/api/chat/saveSentenceAnnotation', {
@@ -622,7 +638,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             setShowSentenceAnnotationDialog(false);
             setCurrentAnnotation(null);
             announceToScreenReader('Annotation dialog closed. Focus returned to sentence selection.', 'assertive');
-            setShowResponseAnnotationDialog(true);
+            returnToResponseAnnotation();
           }}
         />
       )}
@@ -646,6 +662,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                   <button
                     key={sentenceIndex}
                     type="button"
+                    data-annotation-sentence-index={sentenceIndex}
                     className="sentence block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
                     onClick={() => {
                       //setShowResponseAnnotationDialog(false);
