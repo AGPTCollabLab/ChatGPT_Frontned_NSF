@@ -35,6 +35,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
   const [showSentenceAnnotationDialog, setShowSentenceAnnotationDialog] = useState(false);
   const [showResponseAnnotationDialog, setShowResponseAnnotationDialog] = useState(false);
+  const [responseToAnnotate, setResponseToAnnotate] = useState(null);
   const [currentAnnotation, setCurrentAnnotation] = useState(null);
   const [showEndChatDialog, setShowEndChatDialog] = useState(false);
   const [isDialogAutoPrompted, setIsDialogAutoPrompted] = useState(false);
@@ -630,13 +631,16 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
             >
               Annotate Response
             </h2>
-            <p className="mb-4">
-              Response sentences will go here.
+            <p className="mb-4 whitespace-pre-wrap">
+              {responseToAnnotate?.content}
             </p>
             <button
               type="button"
               className="btn"
-              onClick={() => setShowResponseAnnotationDialog(false)}
+              onClick={() => {
+                setShowResponseAnnotationDialog(false);
+                setResponseToAnnotate(null);
+              }}
             >
               Close
             </button>
@@ -724,7 +728,13 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                         }
                         onAnnotateResponse={
                           message.role === 'assistant'
-                            ? () => setShowResponseAnnotationDialog(true)
+                            ? () => {
+                                setResponseToAnnotate({
+                                  content: message.content,
+                                  messageIndex,
+                                });
+                                setShowResponseAnnotationDialog(true);
+                              }
                             : undefined
                         }
                       />
