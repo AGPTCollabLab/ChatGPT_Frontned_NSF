@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 
-export const Message = ({ role, content, onAnnotate, onFeedback, streaming = false, }) => {
+export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateResponse, streaming = false, }) => {
   const { user } = useUser();
   const [focusedSentence, setFocusedSentence] = useState(null);
   const instructionsIdRef = useRef(
@@ -182,7 +182,7 @@ export const Message = ({ role, content, onAnnotate, onFeedback, streaming = fal
                 <button
                   type="button"
                   className="btn bg-purple-600 hover:bg-purple-700"
-                  //onClick={onAnnotate}
+                  onClick={onAnnotateResponse}
                   aria-label="Annotate this response"
                 >
                   Annotate
