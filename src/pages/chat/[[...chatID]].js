@@ -774,7 +774,16 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                                   messageIndex,
                                 });
                                 setShowResponseAnnotationDialog(true);
-                              }
+
+                                setTimeout(() => {
+                                  const firstSentence = document.querySelector(
+                                    '[data-annotation-sentence-index="0"]',
+                                  );
+                                  if (firstSentence) {
+                                    firstSentence.focus();
+                                  }
+                              }, 100);
+                            }
                             : undefined
                         }
                       />
