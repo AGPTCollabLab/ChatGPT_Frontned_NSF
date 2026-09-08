@@ -34,6 +34,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   const [showIntentDialog, setShowIntentDialog] = useState(false);
   const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
   const [showSentenceAnnotationDialog, setShowSentenceAnnotationDialog] = useState(false);
+  const [showResponseAnnotationDialog, setShowResponseAnnotationDialog] = useState(false);
   const [currentAnnotation, setCurrentAnnotation] = useState(null);
   const [showEndChatDialog, setShowEndChatDialog] = useState(false);
   const [isDialogAutoPrompted, setIsDialogAutoPrompted] = useState(false);
@@ -615,6 +616,33 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           }}
         />
       )}
+      {showResponseAnnotationDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="response-annotation-heading"
+          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+        >
+          <div className="bbg-gray-800 text-white p-6 rounded-lg max-w-2xl w-full">
+            <h2
+              id="response-annotation-heading"
+              className="text-xl font-bold mb-4"
+            >
+              Annotate Response
+            </h2>
+            <p className="mb-4">
+              Response sentences will go here.
+            </p>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowResponseAnnotationDialog(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {showEndChatDialog && (
         <EndChatDialog
           chatId={chatId}
@@ -692,6 +720,11 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
                         onFeedback={
                           message.role === 'assistant'
                             ? handleFeedback
+                            : undefined
+                        }
+                        onAnnotateResponse={
+                          message.role === 'assistant'
+                            ? () => setShowResponseAnnotationDialog(true)
                             : undefined
                         }
                       />
