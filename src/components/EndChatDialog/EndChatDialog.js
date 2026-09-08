@@ -110,6 +110,9 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 value={whatWentWell}
                 onChange={e => setWhatWentWell(e.target.value)}
                 placeholder="Share your positive experiences..."
+                spellCheck={true}
+                autoCorrect ="on"
+                autoCapitalize="sentences"
                 className="w-full h-24 p-2 mb-1 border border-gray-600 rounded-md bg-gray-700 text-white"
                 aria-required="true"
               />
@@ -127,6 +130,9 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 value={whatDidntGoWell}
                 onChange={e => setWhatDidntGoWell(e.target.value)}
                 placeholder="Share your suggestions for improvement..."
+                spellCheck={true}
+                autoCorrect ="on"
+                autoCapitalize="sentences"
                 className="w-full h-24 p-2 mb-1 border border-gray-600 rounded-md bg-gray-700 text-white"
                 aria-required="true"
               />
