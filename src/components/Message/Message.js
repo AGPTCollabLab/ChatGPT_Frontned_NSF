@@ -106,7 +106,8 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
       <article
         className={`bg-gray-700 p-4 ${user?.picture ? 'ml-0' : ''}`}
         data-message-role="assistant"
-        aria-label="ChatGPT response"
+        tabIndex={0}
+        aria-label={`AGPT response: ${content}`}
       >
         <div className="flex">
           <div
