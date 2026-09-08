@@ -575,6 +575,23 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
     };
   }, [handleKeyDown]);
 
+  const splitIntoSentences = text => {
+    if (!text) return [];
+    try {
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        const segmenter = new Intl.Segmenter('en', { granularity: 'sentence' });
+        return Array.from(segmenter.segment(text))
+        .map(item => item.segment.trim())
+        .filter(Boolean);
+      }
+    } catch (_) {}
+    
+    return text
+      .split(/(?<=[.!?])\s+/)
+      .map(sentence => sentence.trim())
+      .filter(Boolean);
+  }
+
   const allMessages = [...messages, ...newChatMessages];
 
   return (
@@ -624,15 +641,25 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
           aria-labelledby="response-annotation-heading"
           className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
         >
-          <div className="bbg-gray-800 text-white p-6 rounded-lg max-w-2xl w-full">
+          <div className="bg-gray-800 text-white p-6 rounded-lg max-w-2xl w-full">
             <h2
               id="response-annotation-heading"
               className="text-xl font-bold mb-4"
             >
               Annotate Response
             </h2>
-            <p className="mb-4 whitespace-pre-wrap">
-              {responseToAnnotate?.content}
+            <p className="mb-4">
+              {splitIntoSentences(responseToAnnotate?.content).map(
+                (sentence, sentenceIndex) => (
+                  <button
+                    key={sentenceIndex}
+                    type="button"
+                    className="sentence block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
+                  >
+                    {sentence}
+                  </button>
+                )
+              )}
             </p>
             <button
               type="button"
