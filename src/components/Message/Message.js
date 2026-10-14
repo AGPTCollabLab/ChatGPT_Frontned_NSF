@@ -1,8 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useId } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
+import MessageHeading from '@/components/MessageHeading/MessageHeading';
+import ResponseContent from '@/components/ResponseContent/ResponseContent';
 
 export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateResponse, streaming = false, }) => {
   const { user } = useUser();
+  const headingId = useId();
   const [focusedSentence, setFocusedSentence] = useState(null);
   const instructionsIdRef = useRef(
     `sentence-instructions-${Math.random().toString(36).slice(2)}`,
@@ -107,8 +110,9 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
         className={`bg-gray-700 p-4 ${user?.picture ? 'ml-0' : ''}`}
         data-message-role="assistant"
         tabIndex={0}
-        aria-label={`AGPT response: ${content}`}
+        aria-labelledby={headingId}
       >
+        <MessageHeading id={headingId} role={role} />
         <div className="flex">
           <div
             className="w-[30px] flex flex-col justify-start items-center mr-4"
@@ -125,9 +129,7 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
             )}
           </div>
           <div className="flex-1">
-            <div className="response-content whitespace-pre-wrap text-gray-100">
-              {content}
-            </div>
+            <ResponseContent content={content} />
             {!streaming && (
               <div className="flex gap-2 mt-3">
                 <button
@@ -159,8 +161,9 @@ export const Message = ({ role, content, onAnnotate, onFeedback, onAnnotateRespo
       className={`bg-gray-600 p-4 ${user?.picture ? 'ml-12' : ''}`}
       data-message-role="user"
       tabIndex={0}
-      aria-label={`Your message: ${content}`}
+      aria-labelledby={headingId}
     >
+      <MessageHeading id={headingId} role={role} />
       <div className="flex">
         <div
           className="w-[30px] flex flex-col justify-start items-center mr-4"
