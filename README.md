@@ -60,4 +60,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 
 ## Updates
-0ct 14: added chat title + section headers within response -- dependent on GPT's response following hierarchy, so may need to include a more dyanmic way if they are not adherent to the heading request. Search functionality still todo...
+0ct 14: added chat title + section headers within response -- dependent on GPT's response following hierarchy, so may need to include a more dyanmic way if they are not adherent to the heading request. Added flexible search (can also bring it up via ctrl+k)

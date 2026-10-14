@@ -1,12 +1,48 @@
-import { faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass, faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import SearchChatsDialog from '@/components/SearchChatsDialog/SearchChatsDialog';
 
 export const ChatSidebar = ({ chatId, generatingResponse }) => {
   const [chatList, setChatList] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const focusBeforeSearchRef = useRef(null);
   const router = useRouter();
+
+  const openSearch = () => {
+    focusBeforeSearchRef.current = document.activeElement;
+    setShowSearch(true);
+  };
+
+  const closeSearch = ({ restoreFocus }) => {
+    setShowSearch(false);
+    if (restoreFocus) {
+      const previous = focusBeforeSearchRef.current;
+      const fallback = document.getElementById('search-chats-button');
+      setTimeout(() => {
+        (previous && document.contains(previous) ? previous : fallback)?.focus();
+      }, 0);
+    }
+  };
+
+  // Ctrl+K (Cmd+K on Mac) opens search, as in ChatGPT and Claude. 
+  // ignored while a response streams, another dialog is open, or the
+  // sidebar is hidden behind the welcome message.
+  useEffect(() => {
+    const handleShortcut = event => {
+      if (event.key?.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey)) return;
+      if (event.altKey || event.shiftKey) return;
+      const searchButton = document.getElementById('search-chats-button');
+      if (generatingResponse || !searchButton?.offsetParent) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      event.preventDefault();
+      openSearch();
+    };
+    document.addEventListener('keydown', handleShortcut);
+    return () => document.removeEventListener('keydown', handleShortcut);
+  }, [generatingResponse]);
 
   const handleNewChat = async e => {
     e.preventDefault();
@@ -68,7 +104,33 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
           />
           <span>New chat</span>
         </button>
+        <button
+          id="search-chats-button"
+          type="button"
+          onClick={openSearch}
+          className={`side-menu-item w-full text-left ${
+            generatingResponse ? 'pointer-events-none opacity-50' : ''
+          }`}
+          aria-haspopup="dialog"
+          aria-keyshortcuts="Control+K"
+          aria-disabled={generatingResponse}
+          tabIndex={generatingResponse ? -1 : 0}
+          disabled={generatingResponse}
+        >
+          <FontAwesomeIcon
+            icon={faMagnifyingGlass}
+            aria-hidden="true"
+            className="w-4 h-4"
+          />
+          <span>Search chats</span>
+          <kbd className="ml-auto text-xs text-gray-400" aria-hidden="true">
+            Ctrl+K
+          </kbd>
+        </button>
       </div>
+      {showSearch && (
+        <SearchChatsDialog currentChatId={chatId} onClose={closeSearch} />
+      )}
 
       <section
         className="flex-1 overflow-auto"
