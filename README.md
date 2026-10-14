@@ -2,7 +2,30 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+Install the dependencies:
+
+```bash
+npm ci
+```
+
+Copy `.env.example` to `.env.local` and configure the required services. For
+Auth0, create a Regular Web Application and configure these application URIs:
+
+- Allowed Callback URL: `http://localhost:3000/api/auth/callback`
+- Allowed Logout URL: `http://localhost:3000`
+- Allowed Web Origin: `http://localhost:3000`
+
+Set `AUTH0_ISSUER_BASE_URL` to the Auth0 Domain value (prefixed with `https://`),
+and set `AUTH0_CLIENT_ID` and `AUTH0_CLIENT_SECRET` from the same application.
+Generate `AUTH0_SECRET` with:
+
+```bash
+node -e "console.log(crypto.randomBytes(32).toString('hex'))"
+```
+
+Do not commit `.env.local`; it contains credentials and is ignored by Git.
+
+Then run the development server:
 
 ```bash
 npm run dev
