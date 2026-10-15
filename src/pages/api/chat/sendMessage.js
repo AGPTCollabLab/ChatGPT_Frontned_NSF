@@ -1,3 +1,5 @@
+import { RESPONSE_FORMATTING_INSTRUCTION } from '@/lib/responseFormatting';
+
 export const config = {
   runtime: 'edge',
 };
@@ -162,7 +164,10 @@ export default async function handler(req) {
         },
         body: JSON.stringify({
           model: CHAT_MODEL,
-          messages: sanitizedMessages,
+          messages: [
+            { role: 'system', content: RESPONSE_FORMATTING_INSTRUCTION },
+            ...sanitizedMessages,
+          ],
           stream: true,
           reasoning_effort: 'minimal',
         }),

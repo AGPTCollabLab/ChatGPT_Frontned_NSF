@@ -1,4 +1,4 @@
-import Head from 'next/head';
+import ChatTitle, { getChatTitle } from '@/components/ChatTitle/ChatTitle';
 import { ChatSidebar } from '@/components/ChatSidebar';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { streamReader } from 'openai-edge-stream';
@@ -14,7 +14,7 @@ import IntentDialog from '@/components/IntentDialog';
 import AnnotationDialog from '@/components/AnnotationDialog';
 import EndChatDialog from '@/components/EndChatDialog';
 
-export default function Home({ chatId, messages = [], feedback, isEnded }) {
+export default function Home({ chatId, chatTitle, messages = [], feedback, isEnded }) {
   // Persist the welcome dismissal in sessionStorage so the welcome page
   // does not come back if the chat page ever remounts during navigation.
   const [showLoginMessage, setshowLoginMessage] = useState(() => {
@@ -601,6 +601,7 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
   }
 
   const allMessages = [...messages, ...newChatMessages];
+  const conversationTitle = getChatTitle({ chatId, chatTitle, messages: allMessages });
 
   return (
     <>
@@ -713,17 +714,13 @@ export default function Home({ chatId, messages = [], feedback, isEnded }) {
       {showLoginMessage && <LoginMessage onAcknowledge={handleAcknowledge} />}
 
       <div className={`fixed inset-0 ${showLoginMessage ? 'hidden' : ''}`}>
-        <Head>
-          <title>
-            {chatId ? 'Chat conversation - Accessible ChatGPT' : 'New chat - Accessible ChatGPT'}
-          </title>
-        </Head>
+        <ChatTitle title={conversationTitle} />
 
         <a href="#message-input" className="skip-link sr-only focus:not-sr-only">
           Skip to message input
         </a>
         <h1 className="sr-only">
-          {chatId ? 'Chat conversation' : 'New chat'}
+          {conversationTitle}
         </h1>
 
         <div className="h-screen grid grid-cols-[260px_1fr]">
@@ -915,6 +912,7 @@ export const getServerSideProps = async context => {
     return {
       props: {
         chatId,
+        chatTitle: typeof chat.title === 'string' ? chat.title : null,
         messages: chat.messages.map(message => ({
           ...message,
           _id: uuid(),
