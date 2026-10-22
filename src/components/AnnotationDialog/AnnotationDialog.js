@@ -156,7 +156,7 @@ const AnnotationDialog = ({
               htmlFor="goodOrBad"
               className="block text-sm font-medium text-gray-300 mb-2"
             >
-              1. What is good or bad about this response?
+              1. What is good or bad about it?
               <span className="text-red-400 ml-1" aria-hidden="true">
                 *
               </span>
@@ -167,20 +167,18 @@ const AnnotationDialog = ({
               id="goodOrBad"
               value={goodOrBad}
               onChange={e => setGoodOrBad(e.target.value)}
-              placeholder="Describe what you found good or bad about this specific sentence..."
+              //placeholder="Describe what you found good or bad about this specific sentence..."
               spellCheck={true}
               autoCorrect ="on"
               autoCapitalize="sentences"
               className="w-full h-24 p-2 mb-1 border border-gray-600 rounded-md bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
               aria-describedby={
-                errorMessage ? 'goodOrBad-help annotation-error' : 'goodOrBad-help'
+                errorMessage ? 'annotation-error' : undefined
               }
             />
 
-            <div id="goodOrBad-help" className="sr-only">
-              Describe what you found good or bad about the selected sentence.
-            </div>
+            
           </div>
 
           <div className="mb-4">
@@ -199,28 +197,24 @@ const AnnotationDialog = ({
               id="couldImprove"
               value={couldImprove}
               onChange={e => setCouldImprove(e.target.value)}
-              placeholder="Suggest how this sentence or response could be improved..."
+              //placeholder="Suggest how this sentence or response could be improved..."
               spellCheck={true}
               autoCorrect ="on"
               autoCapitalize="sentences"
               className="w-full h-24 p-2 mb-1 border border-gray-600 rounded-md bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
               aria-describedby={
-                errorMessage
-                  ? 'couldImprove-help annotation-error'
-                  : 'couldImprove-help'
+                errorMessage ? 'annotation-error' : undefined
               }
             />
 
-            <div id="couldImprove-help" className="sr-only">
-              Suggest how the selected sentence or response could be improved.
-            </div>
+            
           </div>
 
           <fieldset
             className="mb-6"
             aria-describedby={
-              errorMessage ? 'share-help annotation-error' : 'share-help'
+              errorMessage ? 'annotation-error' : undefined
             }
           >
             <legend className="block text-sm font-medium text-gray-300 mb-2">
@@ -247,7 +241,7 @@ const AnnotationDialog = ({
                   tabIndex={shareResponse === '' || shareResponse === 'yes' ? 0 : -1}
                   className="mr-2"
                 />
-                Yes
+                Yes, share
               </label>
 
               <label
@@ -264,14 +258,14 @@ const AnnotationDialog = ({
                   tabIndex={shareResponse === 'no' ? 0 : -1}
                   className="mr-2"
                 />
-                No
+                No, keep it private
               </label>
             </div>
 
-            <div id="share-help" className="text-xs text-gray-400 mt-1">
+            {/* <div id="share-help" className="text-xs text-gray-400 mt-1">
               Select yes to allow sharing this annotation for research
               purposes, or no to keep it private.
-            </div>
+            </div> */}
           </fieldset>
 
           <div
