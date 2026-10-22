@@ -55,33 +55,31 @@ const IntentDialog = ({ onSubmit, onClear }) => {
           Set chat intention
         </h2>
         <p id="intent-dialog-description" className="mb-4">
-          Optionally describe your intention for this chat. This step is
-          optional. Press Tab to focus the text area, or press Escape to
-          skip and continue.
+          Optional: describe your intention for this chat. Press Tab to type, or Escape to skip.
         </p>
         <textarea
           value={intent}
           onChange={handleChange}
-          placeholder="Type your intention (optional)..."
+          //placeholder="Type your intention (optional)..."
           spellCheck={true}
           autoCorrect ="on"
           autoCapitalize="sentences"
           className="w-full h-24 p-2 mb-4 bg-gray-600 rounded"
-          aria-label="Intentions text area"
-          aria-describedby="intent-dialog-description"
+          aria-label="Chat intention"
+          //aria-describedby="intent-dialog-description"
         ></textarea>
         <div className="flex justify-end space-x-4">
           <button
             onClick={handleSubmit}
             className="btn bg-blue-500 hover:bg-blue-600"
-            aria-label="Save intention and continue"
+            //aria-label="Save"
           >
             Save
           </button>
           <button
             onClick={handleClear}
             className="btn"
-            aria-label="Skip intention and continue"
+            //aria-label="Skip"
           >
             Skip
           </button>
