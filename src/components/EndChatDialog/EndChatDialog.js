@@ -80,14 +80,12 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
             id="feedback-dialog-title"
             className="text-xl font-bold mb-4"
           >
-            Feedback
+            Feedback About This Response
           </h2>
         </header>
 
         <div id="feedback-dialog-description" className="sr-only">
-          Feedback dialog. Please describe what went well and what could be
-          improved about your chat experience. Press Tab to focus the first
-          answer field, or press Escape to cancel and continue chatting.
+          Press Escape to cancel.
         </div>
 
         {loading ? (
@@ -103,13 +101,13 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
           >
             <div className="mb-4">
               <label htmlFor="whatWentWell" className="block mb-2 font-medium">
-                What went well?
+                What went well in this response?
               </label>
               <textarea
                 id="whatWentWell"
                 value={whatWentWell}
                 onChange={e => setWhatWentWell(e.target.value)}
-                placeholder="Share your positive experiences..."
+                //placeholder="Share your positive experiences..."
                 spellCheck={true}
                 autoCorrect ="on"
                 autoCapitalize="sentences"
@@ -123,13 +121,13 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 htmlFor="whatDidntGoWell"
                 className="block mb-2 font-medium"
               >
-                What could be improved?
+                What could be improved in this reponse?
               </label>
               <textarea
                 id="whatDidntGoWell"
                 value={whatDidntGoWell}
                 onChange={e => setWhatDidntGoWell(e.target.value)}
-                placeholder="Share your suggestions for improvement..."
+                //placeholder="Share your suggestions for improvement..."
                 spellCheck={true}
                 autoCorrect ="on"
                 autoCapitalize="sentences"
@@ -154,7 +152,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 type="button"
                 onClick={onClose}
                 className="btn bg-blue-500 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                aria-label="Cancel and continue chat"
+                //aria-label="Cancel and continue chat"
               >
                 Cancel
               </button>
