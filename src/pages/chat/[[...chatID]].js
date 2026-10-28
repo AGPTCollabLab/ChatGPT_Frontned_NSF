@@ -33,7 +33,7 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
   const [generatingResponse, setGeneratingResponse] = useState(false);
   const [showIntentDialog, setShowIntentDialog] = useState(false);
   const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
-  const [showSentenceAnnotationDialog, setShowSentenceAnnotationDialog] = useState(false);
+const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useState(false);
   const [showResponseAnnotationDialog, setShowResponseAnnotationDialog] = useState(false);
   const [responseToAnnotate, setResponseToAnnotate] = useState(null);
   const [currentAnnotation, setCurrentAnnotation] = useState(null);
@@ -54,7 +54,7 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
   // Last sentence button that was focused before opening the annotation dialog
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
-  const lastAnnotatedSentenceIndexRef = useRef(null);
+  const lastAnnotatedParagraphIndexRef = useRef(null);
   // Create a one-off live region announcement and remove it afterward.
   // Important: the textContent must be set AFTER the element is in the DOM
   // so the screen reader reliably detects the aria-live change. Setting
@@ -216,7 +216,7 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
     }, 100);
   };
 
-  const handleSentenceAnnotationSubmit = async annotation => {
+  const handleParagraphAnnotationSubmit = async annotation => {
     try {
       const response = await fetch('/api/chat/saveSentenceAnnotation', {
         method: 'POST',
@@ -226,15 +226,16 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
         body: JSON.stringify({
           chatId,
           messageIndex: currentAnnotation.messageIndex,
-          annotation,
+          annotation:{
+          ...annotation,
           selectedSentence: annotation.selectedParagraph,
           sentenceIndex: annotation.paragraphIndex,
-        }),
+      }}),
       });
       const data = await response.json();
 
       if (data.message === 'Sentence annotation saved successfully') {
-        setShowSentenceAnnotationDialog(false);
+        setShowParagraphAnnotationDialog(false);
         setCurrentAnnotation(null);
         announceToScreenReader(
           'Annotation saved successfully.',
@@ -570,10 +571,8 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
       showInitialIntentDialog,
       showIntentDialog,
       showAnnotationDialog,
-      showSentenceAnnotationDialog,
       showEndChatDialog,
       messageText,
-      isAnnouncingResponse,
       shouldShowFeedbackOnSpace,
     ],
   );
@@ -605,7 +604,7 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
   const splitIntoParagraphs = text => {
     if (!text) return [];
     return text
-      .split(/\n+/)
+      .split(/\n\s*\n/)
       .map(paragraph => paragraph.trim())
       .filter(Boolean);
   }
@@ -682,8 +681,8 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
                   <button
                     key={paragraphIndex}
                     type="button"
-                    data-annotation-sentence-index={paragraphIndex}
-                    className="sentence block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
+                    data-annotation-paragraph-index={paragraphIndex}
+                    className="paragraph block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
                     onClick={() => {
                       handleMessageAnnotate(paragraph, paragraphIndex, responseToAnnotate.messageIndex);
                     }}
@@ -815,7 +814,7 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
                     showInitialIntentDialog ||
                     showIntentDialog ||
                     showAnnotationDialog ||
-                    showSentenceAnnotationDialog ||
+                    showParagraphAnnotationDialog ||
                     showEndChatDialog ||
                     isChatEnded
                   }
