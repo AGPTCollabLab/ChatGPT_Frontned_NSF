@@ -204,10 +204,10 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
     setShowResponseAnnotationDialog(true);
 
     setTimeout(() => {
-      const sentenceIndex = lastAnnotatedSentenceIndexRef.current;
+      const paragraphIndex = lastAnnotatedParagraphIndexRef.current;
 
       const target = document.querySelector(
-        `[data-annotation-sentence-index="${sentenceIndex}"]`,
+        `[data-annotation-paragraph-index="${paragraphIndex}"]`,
       );
       if (target) {
         target.focus();
@@ -227,6 +227,8 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
           chatId,
           messageIndex: currentAnnotation.messageIndex,
           annotation,
+          selectedSentence: annotation.selectedParagraph,
+          sentenceIndex: annotation.paragraphIndex,
         }),
       });
       const data = await response.json();
@@ -251,13 +253,13 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
     }
   };
 
-  const handleMessageAnnotate = (selectedSentence, sentenceIndex, messageIndex) => {
-    lastAnnotatedSentenceIndexRef.current = sentenceIndex;
+  const handleMessageAnnotate = (selectedParagraph, paragraphIndex, messageIndex) => {
+    lastAnnotatedParagraphIndexRef.current = paragraphIndex;
 
-    setCurrentAnnotation({selectedSentence, sentenceIndex, messageIndex});
+    setCurrentAnnotation({selectedParagraph, paragraphIndex, messageIndex});
     setShowResponseAnnotationDialog(false);
     setTimeout(() => {
-      setShowSentenceAnnotationDialog(true);
+      setShowParagraphAnnotationDialog(true);
     }, 0);
   };
 
@@ -600,6 +602,14 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
       .filter(Boolean);
   }
 
+  const splitIntoParagraphs = text => {
+    if (!text) return [];
+    return text
+      .split(/\n+/)
+      .map(paragraph => paragraph.trim())
+      .filter(Boolean);
+  }
+
   const allMessages = [...messages, ...newChatMessages];
   const conversationTitle = getChatTitle({ chatId, chatTitle, messages: allMessages });
 
@@ -628,17 +638,15 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
           onClose={() => setShowAnnotationDialog(false)}
         />
       )}
-      {showSentenceAnnotationDialog && currentAnnotation && (
+      {showParagraphAnnotationDialog && currentAnnotation && (
         <AnnotationDialog
           chatId={chatId}
           messageIndex={currentAnnotation.messageIndex}
-          selectedSentence={currentAnnotation.selectedSentence}
-          sentenceIndex={currentAnnotation.sentenceIndex}
-          onSubmit={handleSentenceAnnotationSubmit}
+          selectedParagraph={currentAnnotation.selectedParagraph}
+          paragraphIndex={currentAnnotation.paragraphIndex}
+          onSubmit={handleParagraphAnnotationSubmit}
           onClose={() => {
-            setShowSentenceAnnotationDialog(false);
-            setCurrentAnnotation(null);
-            announceToScreenReader('Annotation dialog closed. Focus returned to sentence selection.', 'assertive');
+            setShowParagraphAnnotationDialog(false);
             returnToResponseAnnotation();
           }}
         />
@@ -650,34 +658,11 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
           aria-labelledby="response-annotation-heading"
           className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
         >
-          <div className="bg-gray-800 text-white p-6 rounded-lg max-w-2xl w-full">
-            <h2
-              id="response-annotation-heading"
-              className="text-xl font-bold mb-4"
-            >
-              Annotate Response
-            </h2>
-            <div className="mb-4">
-              {splitIntoSentences(responseToAnnotate?.content).map(
-                (sentence, sentenceIndex) => (
-                  <button
-                    key={sentenceIndex}
-                    type="button"
-                    data-annotation-sentence-index={sentenceIndex}
-                    className="sentence block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
-                    onClick={() => {
-                      //setShowResponseAnnotationDialog(false);
-                      handleMessageAnnotate(sentence, sentenceIndex, responseToAnnotate.messageIndex);
-                    }}
-                  >
-                    {sentence}
-                  </button>
-                )
-              )}
-            </div>
+          <div className="relative bg-gray-800 text-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+
             <button
               type="button"
-              className="btn"
+              className="btn absolute top-3 right-3"
               onClick={() => {
                 setShowResponseAnnotationDialog(false);
                 setResponseToAnnotate(null);
@@ -685,6 +670,30 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
             >
               Close
             </button>
+            <h2
+              id="response-annotation-heading"
+              className="text-xl font-bold mb-4 pr-20"
+            >
+              Annotate Response - Select Paragraph
+            </h2>
+            <div className="mb-4">
+              {splitIntoParagraphs(responseToAnnotate?.content).map(
+                (paragraph, paragraphIndex) => (
+                  <button
+                    key={paragraphIndex}
+                    type="button"
+                    data-annotation-sentence-index={paragraphIndex}
+                    className="sentence block w-full text-left p-2 mb-2 rounded bg-gray-700 hover:bg-gray-600"
+                    onClick={() => {
+                      handleMessageAnnotate(paragraph, paragraphIndex, responseToAnnotate.messageIndex);
+                    }}
+                  >
+                    {paragraph}
+                  </button>
+                )
+              )}
+            </div>
+            
           </div>
         </div>
       )}
@@ -773,11 +782,11 @@ export default function Home({ chatId, chatTitle, messages = [], feedback, isEnd
                                 setShowResponseAnnotationDialog(true);
 
                                 setTimeout(() => {
-                                  const firstSentence = document.querySelector(
-                                    '[data-annotation-sentence-index="0"]',
+                                  const firstParagraph = document.querySelector(
+                                    '[data-annotation-paragraph-index="0"]',
                                   );
-                                  if (firstSentence) {
-                                    firstSentence.focus();
+                                  if (firstParagraph) {
+                                    firstParagraph.focus();
                                   }
                               }, 100);
                             }
