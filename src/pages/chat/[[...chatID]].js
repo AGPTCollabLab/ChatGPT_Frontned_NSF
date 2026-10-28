@@ -513,17 +513,18 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
   const handleKeyDown = useCallback(
     e => {
       const isApple = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform) || /Mac/.test(window.navigator.userAgent);
-      // Ctrl+N (Windows/Linux) or Cmd+N (Mac): New Chat
-      if (
-        e.key.toLowerCase() === 'n' &&
-        (isApple ? e.metaKey : e.ctrlKey) &&
-        e.altKey &&
-        !e.shiftKey
-      ) {
-        e.preventDefault();
-        router.push('/chat');
-        return;
-      }
+      // Ctrl+Shift+Y: New Chat
+    if (
+      e.key.toLowerCase() === 'y' &&
+      e.ctrlKey &&
+      e.shiftKey &&
+      !e.altKey &&
+      !e.metaKey
+    ) {
+      e.preventDefault();
+      router.push('/chat');
+      return;
+    }
 
       if (e.key === 'Enter') {
         if (showInitialIntentDialog || showIntentDialog || showAnnotationDialog || showEndChatDialog) {
