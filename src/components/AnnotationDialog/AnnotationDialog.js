@@ -3,8 +3,8 @@ import React, { useEffect, useState, useRef } from 'react';
 const AnnotationDialog = ({
   chatId,
   messageIndex,
-  selectedSentence,
-  sentenceIndex,
+  selectedParagraph,
+  paragraphIndex,
   onSubmit,
   onClose,
 }) => {
@@ -46,8 +46,8 @@ const AnnotationDialog = ({
       goodOrBad: goodOrBad.trim(),
       couldImprove: couldImprove.trim(),
       shareResponse: shareResponse === 'yes',
-      selectedSentence,
-      sentenceIndex,
+      selectedParagraph,
+      paragraphIndex,
     });
   };
 
@@ -111,31 +111,31 @@ const AnnotationDialog = ({
             id="annotation-dialog-title"
             className="text-xl font-bold mb-4 text-white"
           >
-            Annotate Selected Sentence
+            Annotate Selected Paragraph
           </h2>
         </header>
 
         <div id="annotation-dialog-description" className="sr-only">
-          Dialog to provide annotation for a specific sentence from a ChatGPT
-          response. The selected sentence is shown, followed by three required
+          Dialog to provide annotation for a specific paragraph from a ChatGPT
+          response. The selected paragraph is shown, followed by three required
           questions. Press Tab to move through the form. Press Escape to
           cancel.
         </div>
 
         <div className="mb-4 p-4 bg-gray-700 rounded-md"
           tabIndex="0"
-          aria-labelledby="selected-sentence-heading"
+          aria-labelledby="selected-paragraph-heading"
         >
           <h3
-            id="selected-sentence-heading"
+            id="selected-paragraph-heading"
             className="text-sm font-semibold text-gray-300 mb-2"
           >
-            Selected Sentence:
+            Selected Paragraph:
           </h3>
 
           <p
             className="text-white italic">
-            <q>{selectedSentence}</q>
+            <q>{selectedParagraph}</q>
           </p>
         </div>
 
@@ -167,7 +167,7 @@ const AnnotationDialog = ({
               id="goodOrBad"
               value={goodOrBad}
               onChange={e => setGoodOrBad(e.target.value)}
-              //placeholder="Describe what you found good or bad about this specific sentence..."
+              //placeholder="Describe what you found good or bad about this specific paragraph..."
               spellCheck={true}
               autoCorrect ="on"
               autoCapitalize="sentences"
@@ -197,7 +197,7 @@ const AnnotationDialog = ({
               id="couldImprove"
               value={couldImprove}
               onChange={e => setCouldImprove(e.target.value)}
-              //placeholder="Suggest how this sentence or response could be improved..."
+              //placeholder="Suggest how this paragraph or response could be improved..."
               spellCheck={true}
               autoCorrect ="on"
               autoCapitalize="sentences"
