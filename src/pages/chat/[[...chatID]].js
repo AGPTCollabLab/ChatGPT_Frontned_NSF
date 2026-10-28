@@ -522,7 +522,13 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
       !e.metaKey
     ) {
       e.preventDefault();
-      router.push('/chat');
+      if (!generatingResponse) {
+        router.push(
+        { pathname: '/chat', query: { showIntent: '1' } },
+        undefined,
+        { shallow: false },
+      );
+    }
       return;
     }
 
@@ -587,6 +593,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
       showEndChatDialog,
       messageText,
       shouldShowFeedbackOnSpace,
+      generatingResponse
     ],
   );
 
