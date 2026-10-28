@@ -121,7 +121,7 @@ const EndChatDialog = ({ chatId, messages, onSubmit, onClose }) => {
                 htmlFor="whatDidntGoWell"
                 className="block mb-2 font-medium"
               >
-                What could be improved in this reponse?
+                What could be improved in this response?
               </label>
               <textarea
                 id="whatDidntGoWell"
