@@ -93,7 +93,8 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
             generatingResponse ? 'pointer-events-none opacity-50' : ''
           }`}
           aria-disabled={generatingResponse}
-          aria-label="Start new chat"
+          aria-label="New Chat. Shortcut: Control Shift Y"
+          aria-keyshortcuts="Control+Shift+Y"
           tabIndex={generatingResponse ? -1 : 0}
           disabled={generatingResponse}
         >
@@ -102,7 +103,7 @@ export const ChatSidebar = ({ chatId, generatingResponse }) => {
             aria-hidden="true"
             className="w-4 h-4"
           />
-          <span>New chat</span>
+          <span>New Chat (Ctrl+Shift+Y)</span>
         </button>
         <button
           id="search-chats-button"
