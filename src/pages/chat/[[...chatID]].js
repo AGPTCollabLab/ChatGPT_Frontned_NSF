@@ -55,6 +55,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
   // so we can return focus to it when the dialog closes.
   const lastFocusedSentenceRef = useRef(null);
   const lastAnnotatedParagraphIndexRef = useRef(null);
+  const lastFocusedResponseButtonRef = useRef(null);
   // Create a one-off live region announcement and remove it afterward.
   // Important: the textContent must be set AFTER the element is in the DOM
   // so the screen reader reliably detects the aria-live change. Setting
@@ -632,6 +633,36 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
   const allMessages = [...messages, ...newChatMessages];
   const conversationTitle = getChatTitle({ chatId, chatTitle, messages: allMessages });
 
+  const closeResponseAnnotationDialog = useCallback(() => {
+    setShowResponseAnnotationDialog(false);
+    setResponseToAnnotate(null);
+
+    setTimeout(() => {
+      const previousButton = lastFocusedResponseButtonRef.current;
+
+      if (previousButton && document.body.contains(previousButton)) {
+        previousButton.focus();
+      }
+    }, 100);
+  }, []);
+
+    useEffect(() => {
+    if (!showResponseAnnotationDialog) return;
+
+    const handleEscape = event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeResponseAnnotationDialog();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showResponseAnnotationDialog, closeResponseAnnotationDialog]);
+
   return (
     <>
       {/* Intent, Annotation, Sentence Annotation, and Feedback dialogs */}
@@ -682,10 +713,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
             <button
               type="button"
               className="btn absolute top-3 right-3"
-              onClick={() => {
-                setShowResponseAnnotationDialog(false);
-                setResponseToAnnotate(null);
-              }}
+              onClick={closeResponseAnnotationDialog}
             >
               Close
             </button>
@@ -794,6 +822,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
                         onAnnotateResponse={
                           message.role === 'assistant'
                             ? () => {
+                                lastFocusedResponseButtonRef.current = document.activeElement;
                                 setResponseToAnnotate({
                                   content: message.content,
                                   messageIndex,
