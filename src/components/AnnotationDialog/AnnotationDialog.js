@@ -104,23 +104,17 @@ const AnnotationDialog = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="annotation-dialog-title"
-        aria-describedby="annotation-dialog-description"
       >
         <header>
           <h2
             id="annotation-dialog-title"
             className="text-xl font-bold mb-4 text-white"
           >
-            Annotate Selected Paragraph
+            Annotate Selected Paragraph from the Response
           </h2>
         </header>
 
-        <div id="annotation-dialog-description" className="sr-only">
-          Dialog to provide annotation for a specific paragraph from a ChatGPT
-          response. The selected paragraph is shown, followed by three required
-          questions. Press Tab to move through the form. Press Escape to
-          cancel.
-        </div>
+        
 
         <div className="mb-4 p-4 bg-gray-700 rounded-md"
           tabIndex="0"
