@@ -13,6 +13,7 @@ import LoginMessage from '@/components/LoginMessage';
 import IntentDialog from '@/components/IntentDialog';
 import AnnotationDialog from '@/components/AnnotationDialog';
 import EndChatDialog from '@/components/EndChatDialog';
+import { stripHeadingMarkers } from '@/lib/markdownText';
 
 export default function Home({ chatId, chatTitle, messages = [], feedback, isEnded }) {
   // Persist the welcome dismissal in sessionStorage so the welcome page
@@ -56,6 +57,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
   const lastFocusedSentenceRef = useRef(null);
   const lastAnnotatedParagraphIndexRef = useRef(null);
   const lastFocusedResponseButtonRef = useRef(null);
+  const lastFocusedFeedbackButtonRef = useRef(null);
   // Create a one-off live region announcement and remove it afterward.
   // Important: the textContent must be set AFTER the element is in the DOM
   // so the screen reader reliably detects the aria-live change. Setting
@@ -265,7 +267,22 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
     }, 0);
   };
 
+  // Return focus to the control that opened the feedback dialog, as the
+  // annotation dialog does, instead of moving it to the top of the page.
+  const restoreFocusAfterFeedback = () => {
+    const previous = lastFocusedFeedbackButtonRef.current;
+    lastFocusedFeedbackButtonRef.current = null;
+    setTimeout(() => {
+      const target =
+        previous && previous !== document.body && document.body.contains(previous)
+          ? previous
+          : messageInputRef.current;
+      target?.focus();
+    }, 100);
+  };
+
   const handleFeedback = () => {
+    lastFocusedFeedbackButtonRef.current = document.activeElement;
     // Announce explicitly so the screen reader reliably says the dialog is
     // opening even if the dialog wrapper focus alone is missed.
     announceToScreenReader(
@@ -291,18 +308,8 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
         setShowEndChatDialog(false);
         setIsDialogAutoPrompted(false);
         setChatFeedback(prev => [...(Array.isArray(prev) ? prev : []), feedback]);
-        announceToScreenReader('Feedback saved successfully. You can start a new chat.', 'assertive');
-        const active = document.activeElement;
-        if (active && typeof active.blur === 'function') {
-          try { active.blur(); } catch (_) {}
-        }
-        setTimeout(() => {
-          const newChatBtn = document.getElementById('new-chat-button');
-          if (newChatBtn) {
-            newChatBtn.focus();
-            try { newChatBtn.scrollIntoView({ block: 'center' }); } catch (_) {}
-          }
-        }, 50);
+        announceToScreenReader('Feedback saved successfully.', 'assertive');
+        restoreFocusAfterFeedback();
       } else {
         alert(
           'An error occurred while saving your feedback. Please try again.',
@@ -573,6 +580,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
           document.activeElement !== messageInputRef.current
         ) {
           e.preventDefault();
+          lastFocusedFeedbackButtonRef.current = document.activeElement;
           setShouldShowFeedbackOnSpace(false);
           setHasAutoPromptedFeedback(true);
           setIsDialogAutoPrompted(true);
@@ -735,7 +743,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
                       handleMessageAnnotate(paragraph, paragraphIndex, responseToAnnotate.messageIndex);
                     }}
                   >
-                    {paragraph}
+                    {stripHeadingMarkers(paragraph)}
                   </button>
                 )
               )}
@@ -752,17 +760,7 @@ const [showParagraphAnnotationDialog, setShowParagraphAnnotationDialog] = useSta
           onClose={() => {
             setShowEndChatDialog(false);
             setIsDialogAutoPrompted(false);
-            const active = document.activeElement;
-            if (active && typeof active.blur === 'function') {
-              try { active.blur(); } catch (_) {}
-            }
-            setTimeout(() => {
-              const newChatBtn = document.getElementById('new-chat-button');
-              if (newChatBtn) {
-                newChatBtn.focus();
-                try { newChatBtn.scrollIntoView({ block: 'center' }); } catch (_) {}
-              }
-            }, 50);
+            restoreFocusAfterFeedback();
           }}
           isAutoPrompted={isDialogAutoPrompted}
         />
