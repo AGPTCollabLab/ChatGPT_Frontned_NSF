@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const WELCOME_TITLE = 'Welcome to ChatGPT Interface';
 const WELCOME_INSTRUCTIONS =
-  'This is an accessible ChatGPT interface designed for screen reader users. Press Tab to focus the Acknowledge button and Enter or Space to continue. Press Tab again to focus the Reject button.';
+  'This is an accessible ChatGPT interface designed for screen reader users. Press Tab to focus the Continue button, then press Enter or Space. Press Tab again to focus the Exit button, which signs you out.';
 
 const LoginMessage = ({ onAcknowledge }) => {
   const router = useRouter();
@@ -59,7 +59,7 @@ const LoginMessage = ({ onAcknowledge }) => {
             tabIndex={actionsReady ? 0 : -1}
             aria-hidden={actionsReady ? undefined : 'true'}
           >
-            Acknowledge
+            Continue
           </button>
           <button
             ref={rejectRef}
@@ -68,7 +68,7 @@ const LoginMessage = ({ onAcknowledge }) => {
             tabIndex={actionsReady ? 0 : -1}
             aria-hidden={actionsReady ? undefined : 'true'}
           >
-            Reject
+            Exit
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { stripHeadingMarkers } from '@/lib/markdownText';
 
 const AnnotationDialog = ({
   chatId,
@@ -129,7 +130,7 @@ const AnnotationDialog = ({
 
           <p
             className="text-white italic">
-            <q>{selectedParagraph}</q>
+            <q>{stripHeadingMarkers(selectedParagraph)}</q>
           </p>
         </div>
 
